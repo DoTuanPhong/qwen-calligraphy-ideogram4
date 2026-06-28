@@ -1,0 +1,12 @@
+torch>=2.0.0
+torchvision
+transformers>=4.38.0
+diffusers>=0.26.0
+safetensors
+pillow
+numpy
+matplotlib
+tqdm
+bitsandbytes
+accelerate
+huggingface_hub
