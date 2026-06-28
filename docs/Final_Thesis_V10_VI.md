@@ -688,7 +688,7 @@ Compound gold:
 experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors
 ```
 
-Cả hai checkpoint gold đã được đăng tải công khai trên Hugging Face tại [phong09021998/vietnamese-calligraphy-ideogram4-lora](https://huggingface.co/phong09021998/vietnamese-calligraphy-ideogram4-lora) để hỗ trợ cộng đồng truy cập và tái lập nghiên cứu.
+Cả hai checkpoint gold đã được đăng tải công khai trên Hugging Face tại [phong09021998/vietnamese-calligraphy-ideogram4-lora](https://huggingface.co/phong09021998/vietnamese-calligraphy-ideogram4-lora) để hỗ trợ cộng đồng truy cập và tái lập nghiên cứu. Toàn bộ mã nguồn đã tái cấu trúc và tài liệu đi kèm được chia sẻ công khai trên GitHub tại [DoTuanPhong/qwen-calligraphy-ideogram4](https://github.com/DoTuanPhong/qwen-calligraphy-ideogram4).
 
 <!-- Figure placeholder: copy the final base model scene capability comparison to docs/thesis/figures/fig_3_8_calligraphy_with_base_model_capability.png -->
 ![Hình 3.8. Kiểm tra checkpoint fine-tune khi kết hợp chữ thư pháp với năng lực sinh ảnh nền của Ideogram4.](figures/fig_3_8_calligraphy_with_base_model_capability.png)
