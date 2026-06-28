@@ -10,6 +10,16 @@ Our pipeline implements a surgical Parameter-Efficient Fine-Tuning (PEFT) strate
 - **No-Bounding-Box Compound Layout:** Adapts training to centered two-line multi-word sentences directly, bypassing layout limitations of strict bounding boxes.
 - **Checkpoint Averaging (Souping):** Averages late-stage compatible checkpoints to reduce parameter variance, achieving **97.6% rendering accuracy** (only 4 errors out of 168 words on the compound Eval28 panel).
 
+## Visual Results & Comparisons
+
+### 1. Baseline vs. Fine-Tuned (Eval28 Compound Panel)
+Comparison between the base Ideogram4 model and our final compound souped checkpoint across complex multi-word Vietnamese calligraphy phrases:
+![Before and After Comparison](docs/figures/fig_3_6_compound_eval28_before_after.png)
+
+### 2. Integration with Complex Decorative Scenes
+Testing calligraphy text rendering combined with full holiday still-life backgrounds (Tet holiday theme):
+![Calligraphy in Tet holiday scenes](docs/figures/fig_3_8_calligraphy_with_base_model_capability.png)
+
 ---
 
 ## Directory Structure
