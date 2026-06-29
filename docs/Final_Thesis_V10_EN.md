@@ -243,7 +243,7 @@ Quốc ngữ calligraphy is the art of rendering the Latin-based Vietnamese scri
 
 In calligraphy, the problem is further complicated because marks must not only be orthographically correct. They must integrate into the overall brushwork, maintaining rhythm, stroke thickness variation, slant, and the handcrafted feel. A nặng dot must not resemble a random ink blot; a ngã tilde must not degenerate into a hỏi hook; circumflex and tone marks must be correctly positioned yet remain natural within the stroke layout.
 
-Modern text-to-image models can produce visually appealing calligraphy images, and recent systems increasingly use large multimodal encoders and Diffusion Transformer-style architectures [15], [17], [21–22]. However, commercial image generation models typically do not allow fine-tuning on a specific font, do not guarantee reproducibility, and do not provide fine-grained control over individual Vietnamese diacritics. Conversely, direct rendering from a digital font yields orthographically correct results but lacks brushstroke liveliness: there is no ink variation, dryness, pressure modulation, or natural stroke interaction. The research gap addressed by this thesis lies between these two extremes: learning a specific calligraphic style while preserving accurate Vietnamese diacritics.
+Modern text-to-image models can produce visually appealing calligraphy images, and recent systems increasingly use large multimodal encoders and Diffusion Transformer-style architectures [15, 17, 21, 22]. However, commercial image generation models typically do not allow fine-tuning on a specific font, do not guarantee reproducibility, and do not provide fine-grained control over individual Vietnamese diacritics. Conversely, direct rendering from a digital font yields orthographically correct results but lacks brushstroke liveliness: there is no ink variation, dryness, pressure modulation, or natural stroke interaction. The research gap addressed by this thesis lies between these two extremes: learning a specific calligraphic style while preserving accurate Vietnamese diacritics.
 
 The topic was initially registered under the Qwen Image direction. However, during the research, Qwen Image revealed two major limitations: excessively high VRAM requirements for the local iteration cycle and weak initial Vietnamese rendering, often making errors at the character level. ERNIE Image was considered as an alternative and was better than Qwen Image in several respects: it typically preserved approximately the correct number of characters and occasionally generated some Vietnamese phrases correctly. Nevertheless, ERNIE Image still produced many character-level errors; moreover, notes from the earlier ERNIE Image phase showed that the Mistral3/Ministral3 tokenizer/encoding pipeline with byte-level BPE made syllable-level diacritic alignment difficult. These observations are treated as internal experimental evidence and are summarized in Appendix J, while the corresponding model families are documented in [17, 21].
 
@@ -286,7 +286,7 @@ After the single-word phase, the pipeline addresses checkpoint instability. Effe
 
 The first challenge comes from the Vietnamese writing system itself. Vietnamese has six tones and numerous vowel variants such as `â`, `ă`, `ê`, `ô`, `ơ`, `ư`; a very small mark error can completely corrupt a word. In calligraphy, marks must also be integrated into the brushwork, not merely positioned correctly as in a printed font. If marks are too detached, the image loses its calligraphic quality; if marks blend too heavily into strokes, readers may misinterpret them.
 
-The second challenge lies in fine-tuning and layout. Attention-only LoRA improves performance to some extent but quickly plateaus at 32–39/60, indicating that adjusting attention alone is insufficient to correct glyph geometry. Moreover, the same training recipe can produce either a good checkpoint or a severe collapse; for example, one warm-continue round suffered from many extra nặng dot errors. When transitioning to multi-word images, difficulties increase further because visual text rendering systems must simultaneously handle layout, spacing, character identity, and local glyph geometry [10], [24–26].
+The second challenge lies in fine-tuning and layout. Attention-only LoRA improves performance to some extent but quickly plateaus at 32–39/60, indicating that adjusting attention alone is insufficient to correct glyph geometry. Moreover, the same training recipe can produce either a good checkpoint or a severe collapse; for example, one warm-continue round suffered from many extra nặng dot errors. When transitioning to multi-word images, difficulties increase further because visual text rendering systems must simultaneously handle layout, spacing, character identity, and local glyph geometry [10, 24, 25, 26].
 
 ## 1.4. Literature Review
 
@@ -300,17 +300,33 @@ Diffusion models generate images through iterative denoising [4, 5]. Compared to
 
 ### 1.4.3. Diffusion Transformers and Multimodal Text Encoders
 
-Diffusion Transformers replace U-Net with transformer blocks in the denoising network [7]. Transformers facilitate the integration of text tokens and image tokens, but accurate text rendering remains challenging because the model must convert symbolic signals into spatial geometry [10], [24–26]. For Vietnamese, the important signals are often very small yet linguistically significant.
+Diffusion Transformers replace U-Net with transformer blocks in the denoising network [7]. Transformers facilitate the integration of text tokens and image tokens, but accurate text rendering remains challenging because the model must convert symbolic signals into spatial geometry [10, 24, 25, 26]. For Vietnamese, the important signals are often very small yet linguistically significant.
 
-Models such as Qwen-Image, ERNIE Image, FLUX, and Ideogram4 represent the trend of using DiT and powerful text encoders [15], [17], [21–22]. However, each model has different bottlenecks. Qwen Image is VRAM-heavy and has a weak Vietnamese baseline; ERNIE Image is better than Qwen Image but faces alignment risks due to byte-level BPE; Ideogram4 provides the most practical foundation for this pipeline.
+Models such as Qwen-Image, ERNIE Image, FLUX, and Ideogram4 represent the trend of using DiT and powerful text encoders [15, 17, 21, 22]. However, each model has different bottlenecks. Qwen Image is VRAM-heavy and has a weak Vietnamese baseline; ERNIE Image is better than Qwen Image but faces alignment risks due to byte-level BPE; Ideogram4 provides the most practical foundation for this pipeline.
 
 Common architectural observations across the three open-source approaches surveyed. All three models in the comparison table belong to the Diffusion Transformer-based text-to-image family but make notably different architectural choices:
 
-- **Qwen-Image** (Qwen Team, 20B params, MMDiT, Apache 2.0, arXiv 2508.02324) uses the Qwen2.5-VL text encoder and achieves state-of-the-art on Chinese text rendering [21]. However, zero-shot experiments in this thesis show very limited visual knowledge of diacritical Vietnamese: errors occur at the character level (wrong vowels, missing consonants), at the word level (inconsistent renderings across seeds, character-count variance), and at the tone-mark level (marks omitted, misplaced, or spurious). Combined with its high VRAM cost, this is why Qwen-Image was not retained as the experimental backbone.
+- Qwen-Image (Qwen Team, published 2025-08-04, arXiv 2508.02324) is a foundation image generation model in the Qwen family with 20B parameters, trained from scratch and released under the Apache 2.0 license. The architecture is MMDiT (Multimodal Diffusion Transformer) — a DiT variant that processes text tokens and image tokens simultaneously in parallel streams. The text encoder is confirmed to use the Qwen2.5-VL family (multimodal LLMs in the same lineage as the Qwen3-VL used by Ideogram4). The model supports multi-aspect ratios from 1:1 to 16:9, generating images at 50 inference steps with `true_cfg_scale=4.0` per the published formula. On Qwen's internal benchmarks (GenEval, DPG, OneIG-Bench for generation; GEdit, ImgEdit, GSO for editing; LongText-Bench, ChineseWord, TextCraft for text rendering), Qwen-Image achieves state-of-the-art, particularly for Chinese text rendering [21].
 
-- **ERNIE-Image** (Baidu) combines a Mistral3/Ministral3 text encoder with byte-level BPE [17]. Byte-level BPE is robust for many languages, but it destabilizes Vietnamese syllable alignment — capitalized diacritical forms such as `Ở`, `Ảnh`, `Ý`, `Ước`, `Nguyễn` may decompose into raw bytes and decode incorrectly. Although ERNIE Image preserves character count better than Qwen Image, the tokenizer instability makes it unsuitable for a diacritic-accurate fine-tuning target.
+  Behavior on Vietnamese — empirical observations in this thesis. Although Qwen-Image is strong on Chinese characters and English, zero-shot experiments in this thesis show the model has *very limited visual knowledge of diacritical Vietnamese characters*. Specifically, at the pre-fine-tuning baseline, Qwen-Image often fails *before* the more subtle tone-mark problem can even be isolated:
 
-- **Ideogram4** (Ideogram AI, 9.3B params, published 2026-06-03) is Ideogram's first open-source text-to-image model, trained from scratch [15]. It uses a fully single-stream Diffusion Transformer (34 layers) with concatenated text/image tokens processed by the same transformer — no separate text/image branch. The text encoder is Qwen3-VL-8B-Instruct, with hidden states extracted from 13 intermediate layers [16]. It uses flow-matching [19–20] rather than pure DDPM, supports native resolution from 256 to 2048, and the FP8 base + BF16 LoRA design enables local fine-tuning. With 9.3B parameters, Ideogram4 achieves the best text rendering quality among open-weight models surveyed (surpassing Qwen-Image 20B, FLUX.2 32B, HunyuanImage 3.0 80B MoE). This is why Ideogram4 was selected as the final experimental backbone.
+  (i) Character-level errors — many Vietnamese words are generated with incorrect vowels (`ư/u`, `ơ/o`, `â/ă/a`), missing final consonants, or the entire word is distorted beyond recognition.
+
+  (ii) Word-level errors — for the same single word repeated across different seeds, Qwen-Image often produces inconsistent renderings; the generated character count also varies widely around the correct count.
+
+  (iii) Weak tone and diacritic marks — even when the base of the word is approximately preserved, tone marks (`sắc`, `huyền`, `hỏi`, `ngã`, `nặng`) and vowel diacritics (`â`, `ê`, `ô`) are frequently omitted, misplaced, or spuriously added.
+
+  The consequence is that Qwen-Image cannot serve as a direct evaluation baseline for the Vietnamese diacritic problem: the error rate is already high at the character level, so the "diacritic accuracy" metric carries almost no discriminative information. Combined with the very high VRAM cost (only runnable with `torch.bfloat16` + high-end GPUs), these are the two primary empirical reasons the thesis shifted to Ideogram4 as the final experimental backbone.
+
+- ERNIE-Image (Baidu) is a multimodal image generation model combining a text encoder based on Mistral3/Ministral3 with a byte-level BPE encoding pipeline [17]. The byte-level BPE characteristic has advantages in generality and the ability to represent low-resource languages, but for Vietnamese — where critical semantic information resides at the syllable and tone-mark level — this encoding makes syllable-to-token alignment more difficult than traditional character-level BPE or SentencePiece.
+
+  In ERNIE Image experiments before switching to Ideogram4, an internal tokenizer report showed that this encoding pipeline was unstable for a subset of diacritical Vietnamese characters, especially in sentence-initial capitalized forms; the internal report is listed in Appendix J. Some capitalized Vietnamese vowels with tone marks or diacritics, such as `Ở`, `Ảnh`, `Ý`, `Ước`, `Nguyễn`, could be decomposed into raw bytes rather than being mapped to stable subword tokens. When decoded back, these cases could produce substitute characters or strings that no longer preserve the original form. Across the 7,184 Vietnamese syllables used in the project, the tokenizer experiment recorded significant error groups in both some lowercase forms and many sentence-initial capitalized forms.
+
+  The practical consequence is that ERNIE Image does not merely produce visually incorrect diacritics; it also risks information loss at the text encoding stage itself. When tokens do not stably preserve Vietnamese syllables, the model struggles to learn the relationship between the prompt and the correct calligraphic glyph. In one earlier experimental phase, normalizing data to lowercase could partially reduce tokenizer errors, but this approach is unsuitable for practical applications because formal calligraphy often requires sentence-initial capitals or uppercase in phrases like `An Khang Thịnh Vượng`, `Nhẫn`, `Tâm`.
+
+  Compared to that ERNIE Image direction, the text encoding pipeline in the final Ideogram4 implementation is more stable on the same tested Vietnamese syllable set. This result is one of the reasons the thesis did not continue with ERNIE Image as the primary backbone, even though ERNIE Image was generally better than Qwen Image at preserving character count and occasionally generating short Vietnamese phrases correctly.
+
+- Ideogram4 (Ideogram AI, published 2026-06-03) is Ideogram's *first open-source text-to-image model*, trained from scratch rather than fine-tuned from an existing checkpoint. The model has 9.3B parameters and uses a fully single-stream Diffusion Transformer architecture (34 transformer layers) in which text tokens and image tokens are concatenated into a single unified sequence and jointly processed by the same transformer — there is no separate text/image branch. The text encoder is Qwen3-VL-8B-Instruct (confirmed), from which hidden states are extracted from 13 intermediate layers and concatenated to provide multi-level semantic features. The model uses flow-matching rather than pure DDPM and supports native resolution from 256 to 2048 [15, 16, 19, 20]. With 9.3B parameters, Ideogram4 achieves the best text rendering quality among benchmarked open-weight models — surpassing Qwen-Image (20B), FLUX.2 [dev] (32B), and HunyuanImage 3.0 (80B MoE) — and the FP8 base + BF16 LoRA pipeline design makes local fine-tuning feasible. This is why Ideogram4 was selected as the final experimental backbone of this thesis.
 
 The most notable commonality: all three models use Qwen3-VL/Mistral3-family (or equivalent) text encoders as the conditioning source, meaning the thesis's initial research question about *linguistic signal in the Qwen family* remains valid regardless of which image generation backbone is chosen.
 
@@ -586,7 +602,7 @@ The `soup_e4r2r3r4` checkpoint is the stable Gold4 milestone, achieving 6 errors
 
 ### 3.5.1. Manual Word-Level Evaluation
 
-Because OCR and automatic metrics are not reliable enough for stylized diacritical calligraphy, the primary evaluation is manual. This choice is consistent with the broader difficulty of accurate visual text rendering and evaluation in generated images [10], [24–26]. A word is considered correct if a human reader sees the correct characters, correct diacritics, and no extra marks that change meaning. SSIM may be used as a supporting image-similarity reference [23], but it is not the deciding metric.
+Because OCR and automatic metrics are not reliable enough for stylized diacritical calligraphy, the primary evaluation is manual. This choice is consistent with the broader difficulty of accurate visual text rendering and evaluation in generated images [10, 24, 25, 26]. A word is considered correct if a human reader sees the correct characters, correct diacritics, and no extra marks that change meaning. SSIM may be used as a supporting image-similarity reference [23], but it is not the deciding metric.
 
 ### 3.5.2. Single-Word Fragile Panel
 
@@ -693,8 +709,6 @@ Compound gold:
 experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors
 ```
 
-Both gold checkpoints have been published on Hugging Face at [phong09021998/vietnamese-calligraphy-ideogram4-lora](https://huggingface.co/phong09021998/vietnamese-calligraphy-ideogram4-lora) for public accessibility and replication. The complete, restructured source code and thesis assets are publicly available on GitHub at [DoTuanPhong/qwen-calligraphy-ideogram4](https://github.com/DoTuanPhong/qwen-calligraphy-ideogram4).
-
 ---
 
 # 4. Conclusion
@@ -747,75 +761,75 @@ In summary, this thesis builds an empirical, evidence-based Ideogram4 fine-tunin
 
 # References
 
-[1] I. Goodfellow et al., "Generative adversarial nets," in *Proc. 27th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, Montreal, QC, Canada, Dec. 2014, pp. 2672–2680.
+[1] I. Goodfellow et al., "Generative Adversarial Nets," *NeurIPS*, 2014.
 
-[2] Z. Lyu, X. Bai, B. Shi, and C. Yao, "CalliGAN: Style and structure-aware Chinese calligraphy character generator," in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. Workshops (CVPRW)*, Seattle, WA, USA, Jun. 2020, pp. 494–495.
+[2] Z. Lyu, X. Bai, B. Shi, and C. Yao, "CalliGAN: Style and Structure-aware Chinese Calligraphy Character Generator," *CVPR Workshops*, 2020.
 
-[3] J.-Y. Zhu, T. Park, P. Isola, and A. A. Efros, "Unpaired image-to-image translation using cycle-consistent adversarial networks," in *Proc. IEEE Int. Conf. Comput. Vis. (ICCV)*, Venice, Italy, Oct. 2017, pp. 2242–2251.
+[3] J.-Y. Zhu, T. Park, P. Isola, and A. A. Efros, "Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks," *ICCV*, 2017.
 
-[4] J. Ho, A. Jain, and P. Abbeel, "Denoising diffusion probabilistic models," in *Proc. 34th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, Vancouver, BC, Canada, Dec. 2020, pp. 6840–6851.
+[4] J. Ho, A. Jain, and P. Abbeel, "Denoising Diffusion Probabilistic Models," *NeurIPS*, 2020.
 
-[5] J. Song, C. Meng, and S. Ermon, "Denoising diffusion implicit models," in *Proc. Int. Conf. Learn. Represent. (ICLR)*, Vienna, Austria, May 2021, pp. 1–22.
+[5] J. Song, C. Meng, and S. Ermon, "Denoising Diffusion Implicit Models," *ICLR*, 2021.
 
-[6] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, "High-resolution image synthesis with latent diffusion models," in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, New Orleans, LA, USA, Jun. 2022, pp. 10674–10685.
+[6] R. Rombach, A. Blattmann, D. Lorenz, P. Esser, and B. Ommer, "High-Resolution Image Synthesis with Latent Diffusion Models," *CVPR*, 2022.
 
-[7] W. Peebles and S. Xie, "Scalable diffusion models with transformers," in *Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)*, Paris, France, Oct. 2023, pp. 4172–4182.
+[7] W. Peebles and S. Xie, "Scalable Diffusion Models with Transformers," *ICCV*, 2023.
 
-[8] E. J. Hu et al., "LoRA: Low-rank adaptation of large language models," in *Proc. Int. Conf. Learn. Represent. (ICLR)*, Apr. 2022, pp. 1–16.
+[8] E. J. Hu et al., "LoRA: Low-Rank Adaptation of Large Language Models," *ICLR*, 2022.
 
-[9] N. Ruiz et al., "DreamBooth: Fine tuning text-to-image diffusion models for subject-driven generation," in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)*, Vancouver, BC, Canada, Jun. 2023, pp. 22500–22510.
+[9] N. Ruiz et al., "DreamBooth: Fine Tuning Text-to-Image Diffusion Models for Subject-Driven Generation," *CVPR*, 2023.
 
-[10] M. Chen et al., "TextDiffuser: Diffusion models as text painters," in *Proc. 37th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, New Orleans, LA, USA, Dec. 2023, pp. 9353–9367.
+[10] M. Chen et al., "TextDiffuser: Diffusion Models as Text Painters," *NeurIPS*, 2023.
 
-[11] A. Radford et al., "Learning transferable visual models from natural language supervision," in *Proc. 38th Int. Conf. Mach. Learn. (ICML)*, Jul. 2021, pp. 8748–8763.
+[11] A. Radford et al., "Learning Transferable Visual Models From Natural Language Supervision," *ICML*, 2021.
 
-[12] Y. Li, S. Wang, J. Zhang, and K. Chen, "BLIP-2: Bootstrapping language-image pre-training with frozen image encoders and large language models," in *Proc. 40th Int. Conf. Mach. Learn. (ICML)*, Honolulu, HI, USA, Jul. 2023, pp. 1–13.
+[12] Y. Li et al., "BLIP-2: Bootstrapping Language-Image Pre-training with Frozen Image Encoders and Large Language Models," *ICML*, 2023.
 
-[13] T. Wortsman et al., "Model soups: Averaging weights of multiple fine-tuned models improves accuracy without increasing inference time," in *Proc. 39th Int. Conf. Mach. Learn. (ICML)*, Baltimore, MD, USA, Jul. 2022, pp. 23965–23998.
+[13] T. Wortsman et al., "Model Soups: Averaging Weights of Multiple Fine-Tuned Models Improves Accuracy Without Increasing Inference Time," *ICML*, 2022.
 
-[14] P. Izmailov, D. Podoprikhin, T. Garipov, D. Vetrov, and A. G. Wilson, "Averaging weights leads to wider optima and better generalization," in *Proc. 34th Conf. Uncertainty Artif. Intell. (UAI)*, Monterey, CA, USA, Aug. 2018, pp. 876–885.
+[14] P. Izmailov et al., "Averaging Weights Leads to Wider Optima and Better Generalization," *UAI*, 2018.
 
-[15] Ideogram AI, "Ideogram 4.0 technical details," Ideogram AI, Tech. Rep., Jun. 2026. [Online]. Available: https://ideogram.ai/blog/ideogram-4.0/, accessed: Jun. 28, 2026.
+[15] Ideogram AI, "Ideogram 4.0 Technical Details," technical documentation, 2026.
 
-[16] Qwen Team, "Qwen3-VL technical report," *arXiv:2511.21631*, Nov. 2025. [Online]. Available: https://arxiv.org/abs/2511.21631
+[16] Qwen Team, "Qwen3-VL Technical Report," *arXiv:2511.21631*, 2025.
 
-[17] Baidu ERNIE-Image Team, "Introducing ERNIE-Image," Baidu, Tech. Rep., 2026. [Online]. Available: https://yiyan.baidu.com/blog/posts/ernie-image, accessed: Jun. 28, 2026.
+[17] Baidu ERNIE-Image Team, "ERNIE-Image Technical Report," technical report, 2026.
 
-[18] ModelScope Contributors, "DiffSynth-Studio: A diffusion engine," Open-source software repository, 2024–2026. [Online]. Available: https://github.com/modelscope/DiffSynth-Studio, commit `6d103c0`, accessed: Jun. 5, 2026.
+[18] ModelScope Contributors, "DiffSynth-Studio: A Diffusion Engine," software repository, 2024-2026.
 
-[19] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le, "Flow matching for generative modeling," in *Proc. Int. Conf. Learn. Represent. (ICLR)*, Kigali, Rwanda, May 2023, pp. 1–17.
+[19] Y. Lipman, R. T. Q. Chen, H. Ben-Hamu, M. Nickel, and M. Le, "Flow Matching for Generative Modeling," *ICLR*, 2023.
 
-[20] P. Esser, S. Kulal, A. Blattmann, R. Rombach, B. Ommer, and J. Z. Kolter, "Scaling rectified flow transformers for high-resolution image synthesis," in *Proc. 41st Int. Conf. Mach. Learn. (ICML)*, Vienna, Austria, Jul. 2024, pp. 1–14.
+[20] P. Esser et al., "Scaling Rectified Flow Transformers for High-Resolution Image Synthesis," *ICML*, 2024.
 
-[21] Qwen Team, "Qwen-Image technical report," *arXiv:2508.02324*, Aug. 2025. [Online]. Available: https://arxiv.org/abs/2508.02324
+[21] Qwen Team, "Qwen-Image Technical Report," *arXiv:2508.02324*, 2025.
 
-[22] Black Forest Labs, "FLUX: A fast lightweight universal model," Black Forest Labs, Tech. Rep., 2024. [Online]. Available: https://github.com/black-forest-labs/flux, accessed: Jun. 28, 2026.
+[22] Black Forest Labs, "FLUX," technical report and software repository, 2024.
 
-[23] Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, "Image quality assessment: From error visibility to structural similarity," *IEEE Trans. Image Process.*, vol. 13, no. 4, pp. 600–612, Apr. 2004.
+[23] Z. Wang, A. C. Bovik, H. R. Sheikh, and E. P. Simoncelli, "Image Quality Assessment: From Error Visibility to Structural Similarity," *IEEE Transactions on Image Processing*, 2004.
 
-[24] Y. Tuo, W. Xiang, J.-Y. He, Y. Geng, and X. Xie, "AnyText: Multilingual visual text generation and editing," in *Proc. Int. Conf. Learn. Represent. (ICLR)*, Vienna, Austria, May 2024, pp. 1–17.
+[24] Y. Tuo, W. Xiang, J.-Y. He, Y. Geng, and X. Xie, "AnyText: Multilingual Visual Text Generation and Editing," *ICLR*, 2024.
 
-[25] Y. Yang et al., "GlyphControl: Glyph conditional control for visual text generation," in *Proc. 37th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, New Orleans, LA, USA, Dec. 2023, pp. 1–16.
+[25] Y. Yang et al., "GlyphControl: Glyph Conditional Control for Visual Text Generation," *NeurIPS*, 2023.
 
-[26] Z. Liu, X. Yang, H. Zhang, and A. C. Berg, "Glyph-ByT5: A customized text encoder for accurate visual text rendering," in *Proc. Eur. Conf. Comput. Vis. (ECCV)*, Milan, Italy, Sep.–Oct. 2024, pp. 1–18.
+[26] Z. Liu et al., "Glyph-ByT5: A Customized Text Encoder for Accurate Visual Text Rendering," *ECCV*, 2024.
 
-[27] D. Kalajdzievski, "A rank stabilization scaling factor for fine-tuning with LoRA," *arXiv:2312.03732*, Dec. 2023. [Online]. Available: https://arxiv.org/abs/2312.03732
+[27] D. Kalajdzievski, "A Rank Stabilization Scaling Factor for Fine-Tuning with LoRA," *arXiv:2312.03732*, 2023.
 
-[28] T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer, "QLoRA: Efficient finetuning of quantized LLMs," in *Proc. 37th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, New Orleans, LA, USA, Dec. 2023, pp. 10088–10115.
+[28] T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer, "QLoRA: Efficient Finetuning of Quantized LLMs," *NeurIPS*, 2023.
 
 ---
 
 **Notes on the validity of selected references**
 
-- `[15]` Ideogram AI 2026 — points to the official Ideogram 4.0 technical blog post at `https://ideogram.ai/blog/ideogram-4.0/`. This is the sole official source published by Ideogram AI as of this writing; *an arXiv-format technical report has not been released*. The web URL and access date `Jun. 28, 2026` are recorded in the reference entry.
-- `[16]` Qwen3-VL Technical Report (*arXiv:2511.21631*, submitted 2025-11-26) — the official arXiv paper by the Qwen Team describing the Qwen3-VL architecture in detail. Updated after the initial draft was written. Previously this reference was listed generically as "technical report, 2026" because the arXiv version had not yet appeared; now it has an official arXiv ID (`https://arxiv.org/abs/2511.21631`) and can be directly looked up. Qwen3-VL describes dense 2B/4B/8B/32B and MoE 30B-A3B/235B-A22B variants, supporting 256K-token interleaved context. The version used by Ideogram4 is Qwen3-VL-8B-Instruct (the 8B dense variant).
-- `[17]` Baidu ERNIE-Image Team — points to the official blog post "Introducing ERNIE-Image" at `https://yiyan.baidu.com/blog/posts/ernie-image`. This is Baidu's official announcement source for ERNIE-Image, although a PDF-format technical report has not been widely released. The web URL and access date `Jun. 28, 2026` are recorded in the reference entry.
-- `[21]` Qwen-Image Technical Report (*arXiv:2508.02324*) — this is the reference cited for the Qwen-Image architecture section, with an official arXiv ID (`https://arxiv.org/abs/2508.02324`) and the most peer-reviewable source.
-- `[18]` DiffSynth-Studio — open-source software reference. The repository URL (`https://github.com/modelscope/DiffSynth-Studio`), the 2024–2026 development span, and the specific commit hash (`6d103c0`, accessed 2026-06-05) used to load Ideogram4 are now recorded in the reference entry.
+- `[15]` Ideogram AI 2026 — points to the technical blog post announcing Ideogram 4 (see `ideogram.ai/blog/ideogram-4.0/`). This is the sole official source published by Ideogram AI as of this writing; *an arXiv-format technical report has not been released*.
+- `[16]` Qwen3-VL Technical Report (arXiv:2511.21631, submitted 2025-11-26) — the official arXiv paper by the Qwen Team describing the Qwen3-VL architecture in detail. Updated after the initial draft was written. Previously this reference was listed generically as "technical report, 2026" because the arXiv version had not yet appeared; now it has an official arXiv ID and can be directly looked up. Qwen3-VL describes dense 2B/4B/8B/32B and MoE 30B-A3B/235B-A22B variants, supporting 256K-token interleaved context. The version used by Ideogram4 is Qwen3-VL-8B-Instruct (the 8B dense variant).
+- `[17]` Baidu ERNIE-Image Team — points to the official blog post "Introducing ERNIE-Image" on `yiyan.baidu.com/blog/posts/ernie-image`. This is Baidu's official announcement source for ERNIE-Image, although a PDF-format technical report has not been widely released.
+- `[21]` Qwen-Image Technical Report (arXiv:2508.02324) — this is the reference cited for the Qwen-Image architecture section, with an official arXiv ID and the most peer-reviewable source.
+- `[18]` DiffSynth-Studio — open-source software reference; the repository URL (`github.com/modelscope/DiffSynth-Studio`) and specific commit hash (`6d103c0`, 2026-06-05) used to load Ideogram4 should be clearly noted.
 
-References `[1]`–`[14]`, `[19]`, `[20]`, and `[23]`–`[28]` are widely published works, searchable via Google Scholar or arXiv; no authenticity issues.
+References `[1]`–`[14]` and `[19]`–`[28]` are widely published works, searchable via Google Scholar or arXiv; no authenticity issues.
 
-**Cross-referencing body ↔ reference list:** The model-specific citations used in Section 1.4.3 have been cross-checked against the reference list: Qwen-Image is cited with `[21]`, ERNIE-Image with `[17]`, Ideogram4 with `[15–16]`, and FLUX with `[22]`. General visual-text-rendering limitations are supported by `[10], [24–26]`, while flow-matching background is supported by `[19–20]`. In later revision rounds, reference `[16]` was updated from the generic "technical report, 2026" form to the official arXiv ID `2511.21631` after the Qwen Team published the full technical report.
+**Cross-referencing body ↔ reference list:** The model-specific citations used in Section 1.4.3 have been cross-checked against the reference list: Qwen-Image is cited with `[21]`, ERNIE-Image with `[17]`, Ideogram4 with `[15, 16]`, and FLUX with `[22]`. General visual-text-rendering limitations are supported by `[10, 24, 25, 26]`, while flow-matching background is supported by `[19, 20]`. In later revision rounds, reference `[16]` was updated from the generic "technical report, 2026" form to the official arXiv ID `2511.21631` after the Qwen Team published the full technical report.
 
 ---
 
@@ -889,8 +903,8 @@ Dôi -> Dồi
 ## Appendix G: Internal Probe Reports
 
 ```text
-docs/probe_reports/_QWEN3_VL_SIGNAL_PROBE_2026-06-23.md
-docs/probe_reports/_QWEN3_VL_CUU_FAMILY_PROBE_2026-06-24.md
+docs/deep_research/v11 Curing the Vietnamese Diacritic Plateau: A Lever Matrix for DiT LoRA SFT/_QWEN3_VL_SIGNAL_PROBE_2026-06-23.md
+docs/deep_research/v11 Curing the Vietnamese Diacritic Plateau: A Lever Matrix for DiT LoRA SFT/_QWEN3_VL_CUU_FAMILY_PROBE_2026-06-24.md
 ```
 
 ## Appendix H: Comparison Image List
@@ -971,7 +985,7 @@ This appendix records which parts of the thesis are supported by external litera
 | Sections 3.2.2 and 3.2.3 | The compound dataset covers 406/406 Vietnamese diacritical token IDs and contains 2808 compound images plus supplementary single-word samples | `data/coverage_v10/metadata_compound_2808.jsonl`; Appendix B; tokenizer robustness reports | Keep the metadata file and build script with the submitted artifact package |
 | Section 3.3 | Qwen3-VL is not globally blind to Vietnamese diacritics; the 990-vs-7165 probe produced 42 very-hard, 225 hard, 567 medium, and 156 easy cases | Internal probe reports in Appendix G and persisted probe results under `experiments/results/v10_phase1_probes/` | Keep probe reports and result tables because this is an internal empirical claim |
 | Sections 3.4-3.6 | Attention-only plateau, wide-target improvement, `soup567`, compound bridge, Gold4, and final 4/168 Eval28 result | Appendix C, D, E, F; evaluation directories and checkpoint registry | Keep checkpoint names, eval folders, and manual scoring notes consistent with the final figures |
-| Section 3.5 | Manual evaluation is the primary metric because OCR/automatic metrics are unreliable for stylized Vietnamese calligraphy | Visual text rendering references [10], [24–26], SSIM reference [23], and internal manual evaluation protocol | If the thesis committee asks for stronger evaluation, add a short note that OCR is not used as the final judge because the target domain is stylized calligraphy |
+| Section 3.5 | Manual evaluation is the primary metric because OCR/automatic metrics are unreliable for stylized Vietnamese calligraphy | Visual text rendering references [10, 24, 25, 26], SSIM reference [23], and internal manual evaluation protocol | If the thesis committee asks for stronger evaluation, add a short note that OCR is not used as the final judge because the target domain is stylized calligraphy |
 | Section 3.5.4 and Figure 3.8 | Fine-tuned checkpoints should preserve base image generation capability while improving Vietnamese calligraphy | Figure 3.8 and prompt records in Appendix I | Keep the exact prompts, seeds, and source images used to build Figure 3.8 |
 | Section 4.4 | Future extension to real calligraphy photographs and multiple fonts | This is a proposed future direction, not a completed result | No citation is strictly required, but it should remain framed as future work rather than current achievement |
 
