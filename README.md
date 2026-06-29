@@ -137,9 +137,13 @@ python3 -m src.pipeline.infer \
 If you use this codebase or checkpoint in your research, please cite our Master's thesis:
 ```bibtex
 @mastersthesis{dopt2026vietnamesecalligraphy,
-  author    = {Đỗ Tuấn Phong},
-  title     = {Fine-tuning Ideogram4 for Vietnamese Calligraphy Text Rendering},
-  school    = {Master's Thesis},
-  year      = {2026}
+  author       = {Đỗ Tuấn Phong},
+  title        = {Fine-tuning Ideogram4 for Vietnamese Calligraphy Text Rendering},
+  school       = {FPT University},
+  address      = {Hanoi, Vietnam},
+  year         = {2026},
+  type         = {{M.Sc.}},
+  month        = jun,
+  note         = {MSE-AI program}
 }
 ```
