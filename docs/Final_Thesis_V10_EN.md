@@ -34,17 +34,13 @@ FPT University
 
 ## Abstract
 
-Quốc ngữ calligraphy is a Vietnamese art form in which the Latin-based script is rendered using traditional brushwork. Modern image generation models can produce aesthetically rich images, yet they struggle with Vietnamese because the language depends heavily on tone marks and vowel diacritics. A generated image may look appealing but fail semantically, rendering `Cữu` as `Cưu`, `Chưởng` as `Chưỡng`, or `Gẫy` as `Gậy`. In calligraphy, these marks are linguistically mandatory; they must integrate with brush-stroke geometry at the same time.
+Quốc ngữ calligraphy renders the Latin-based Vietnamese script through calligraphic brushwork. Tone marks and vowel diacritics are linguistically mandatory, so a visually appealing image can still fail semantically if the model renders `Cữu` as `Cưu` or `Chưởng` as `Chưỡng`. Modern text-to-image models struggle with this because Vietnamese relies on small yet semantically decisive marks that must integrate with brushstroke geometry.
 
-Although this work was registered under the Qwen Image topic, early experiments showed that Qwen Image demanded too much VRAM for rapid local iteration and made character-level errors on Vietnamese before tone-mark problems could even be isolated. I also tested ERNIE Image, which preserved character counts better but introduced its own tokenizer instability through byte-level BPE on capitalized diacritical forms. I eventually moved to Ideogram4, a Diffusion Transformer with a stronger text-rendering foundation and a Qwen3-VL-based conditioning interface that kept the original research question about Qwen-family linguistic signal intact.
+Registered under the Qwen Image topic, the work was redirected to Ideogram4 after Qwen Image proved too VRAM-heavy and ERNIE Image showed tokenizer instability on capitalized diacritical forms. Ideogram4 uses Qwen3-VL-8B-Instruct as the text encoder, so the original research question about Qwen-family linguistic signal remains applicable. The main contribution is a DiT-LoRA pipeline organized around glyph binding: probing where diacritic signal persists in the conditioning, expanding the LoRA target from attention-only to `attention.qkv`, `attention.o`, `feed_forward.w1`/`w2`/`w3`, and `adaln_modulation`, stabilizing high-variance checkpoints through averaging, then training directly on multi-word layouts.
 
-My main contribution is an Ideogram4 DiT-LoRA pipeline organized around glyph binding to improve Vietnamese diacritic accuracy. The pipeline diagnoses where diacritic signal persists or degrades, fine-tunes selected DiT modules via LoRA, stabilizes high-variance checkpoints through averaging, and trains directly on multi-word layouts.
+Attention-only LoRA plateaued at 32–39/60. The wide-target configuration broke through the plateau (48/60 best single, 52/60 after averaging). Since single-word gains did not transfer to multi-word images, a compound dataset of 4/5/7/8-word images covering all 406 Vietnamese diacritical token IDs was built. On the Eval28 panel (168 words), checkpoint averaging and a final `3e-5` follow-up reduced errors from 56/168 to 4/168 (97.6% word-level accuracy). Accurate Vietnamese rendering requires correct diagnosis of where the diacritic signal lives, proper DiT module adjustment, checkpoint stabilization, and direct training on the multi-word layout distribution.
 
-Attention-only LoRA plateaued at 32–39 correct words out of 60 on a difficult single-word panel. Probing hidden states and projections revealed that Qwen3-VL retains diacritic signal in many cases; the bottleneck is the DiT not consistently binding that signal to correct glyph geometry. The LoRA target was expanded to `attention.qkv`, `attention.o`, `feed_forward.w1`, `feed_forward.w2`, `feed_forward.w3`, and `adaln_modulation`. The wider configuration broke through the plateau: 48/60 at the best single checkpoint, 52/60 after averaging compatible checkpoints.
-
-Single-word gains did not transfer automatically to multi-word images. A compound dataset of 4/5/7/8-word images was built, split into two center-aligned lines, covering all 406 Vietnamese diacritical token IDs at the tokenizer level. On the compound Eval28 panel (28 images, 168 words), the single-word gold checkpoint `soup567` produced 56 errors. Compound bridge fine-tuning and checkpoint averaging brought this down to 6/168 at the `soup_e4r2r3r4` milestone. A follow-up branch at learning rate `3e-5`, lightly averaged at 90% new + 10% old, reached 4/168 (roughly 97.6% word-level accuracy). Accurate Vietnamese calligraphy, it turns out, needs a strong base model plus correct diagnosis of where the linguistic signal lives, proper DiT module adjustment, checkpoint stabilization, and direct training on the multi-word layout distribution.
-
-**Keywords:** Vietnamese calligraphy, Qwen Image, Ideogram4, fine-tuning, LoRA, Diffusion Transformer, text-to-image generation, Vietnamese diacritics, glyph binding.
+**Keywords:** Vietnamese calligraphy, Qwen Image, Ideogram4, fine-tuning, LoRA, Diffusion Transformer, Vietnamese diacritics, glyph binding.
 
 ---
 
@@ -160,7 +156,7 @@ Appendices
 
 **Table 3.6:** Compound Eval28 result progression
 
-**Table H.1:** Comparison image list and figure readiness status
+**Table H.1:** Comparison image list
 
 **Table J.1:** Reference and evidence checklist
 
@@ -245,27 +241,27 @@ Recent text-to-image systems increasingly rely on large multimodal encoders and 
 
 I originally registered this topic under the Qwen Image direction. During early experiments, Qwen Image turned out to be impractical: too much VRAM for rapid iteration, and too weak on Vietnamese at baseline (character-level errors before tone-mark problems could even be isolated). ERNIE Image did better at preserving character counts but stumbled on its own tokenizer, where Mistral3/Ministral3 byte-level BPE broke syllable-level diacritic alignment, especially for capitalized forms like `Ở`, `Ảnh`, `Ước`. These observations are documented as internal experimental evidence in Appendix J; the model families themselves appear in [17, 21].
 
-I moved to Ideogram4 because its published technical description reports strong text rendering and a Qwen3-VL-based conditioning interface [15, 16]. The research objective stayed the same: fine-tuning a modern image generation model for Vietnamese calligraphy with accurate diacritics. What changed was the backbone, chosen based on what the experiments actually showed rather than what I had originally planned.
+I moved to Ideogram4 because its published technical description reports strong text rendering and a Qwen3-VL-based conditioning interface [15, 16]. The research objective stayed the same: fine-tuning a modern image generation model for Vietnamese calligraphy with accurate diacritics. What changed was the backbone, chosen based on what the experiments actually showed rather than the original plan.
 
 ## 1.2. Research Objectives and Scope
 
 ### 1.2.1. Scope Change from Qwen-Image to Ideogram4
 
-The official title still says "Qwen Image"; that was the registered direction at the start. It is treated here as the administrative title and the research objective: fine-tuning a text-to-image model for Vietnamese calligraphy with accurate diacritics.
+**Administrative note on the title.** The official title retains "Qwen Image" for administrative continuity with the registered thesis proposal. The title reflects the original registered research direction and the underlying research objective: fine-tuning a modern text-to-image model for Vietnamese calligraphy with accurate diacritics. The implementation backbone is Ideogram4, but the research question about Qwen-family linguistic signal remains intact because the Ideogram4 text encoder (Qwen3-VL-8B-Instruct) comes from the same Qwen family.
 
-The implementation scope shifted during experimentation, for reasons detailed in Section 1.1. Ideogram4 offered a stronger text-rendering foundation, practical VRAM requirements for local LoRA training, and, importantly, a Qwen3-VL-based conditioning pipeline [15, 16] that kept the original question about Qwen-family linguistic signal relevant.
+The implementation scope shifted during experimentation, for reasons detailed in Section 1.1. Ideogram4 offered a stronger text-rendering foundation, practical VRAM requirements for local LoRA training, and a Qwen3-VL-based conditioning pipeline [15, 16], making it a natural fit for the registered objective.
 
 The experimental chapters that follow report the Ideogram4 DiT-LoRA pipeline.
 
 ### 1.2.2. Research Objectives and Boundaries
 
-My goal is to build a fine-tuning pipeline that generates Vietnamese calligraphy images with accurate diacritics. The implementation uses Ideogram4 and LoRA, staying within the registered Qwen Image topic [8, 15].
+The goal is to build a fine-tuning pipeline that generates Vietnamese calligraphy images with accurate diacritics. The implementation uses Ideogram4 and LoRA, staying within the registered Qwen Image topic [8, 15].
 
-More concretely, the research analyzes where Ideogram4 goes wrong on Vietnamese calligraphy, specifically whether errors come from the Qwen3-VL text encoder, the prompt, insufficient LoRA capacity, or the DiT's glyph-binding behavior. From that diagnosis, a LoRA configuration is designed to improve diacritic rendering without full fine-tuning; data and evaluation panels are built for both single-word and multi-word layouts; and single-word gains are checked for transfer to compound layouts. What I aim to deliver is not just a checkpoint but a reproducible pipeline: training, checkpoint conversion, evaluation rendering, and manual scoring.
+More concretely, the research analyzes where Ideogram4 goes wrong on Vietnamese calligraphy, specifically whether errors come from the Qwen3-VL text encoder, the prompt, insufficient LoRA capacity, or the DiT's glyph-binding behavior. From that diagnosis, a LoRA configuration is designed to improve diacritic rendering without full fine-tuning; data and evaluation panels are built for both single-word and multi-word layouts; and single-word gains are checked for transfer to compound layouts. The aim is to deliver not just a checkpoint but a reproducible pipeline: training, checkpoint conversion, evaluation rendering, and manual scoring.
 
 I deliberately keep the experimental scope narrow. The base model is Ideogram4 with a frozen Qwen3-VL text encoder. LoRA adapters go on the DiT backbone; the target style is Thu Phap Thanh Cong Unicode at 1024×1024. Word-level accuracy is evaluated by human inspection, since OCR is not reliable enough for stylized Vietnamese calligraphy. Content ranges from single words to compound 4/5/7/8-word images split across two lines.
 
-I do not claim to solve all calligraphic styles or all forms of Vietnamese text rendering. What I present is an experimental pipeline for one specific font, with diacritic accuracy as the main target.
+The claim is not to solve all calligraphic styles or all forms of Vietnamese text rendering. The scope is an experimental pipeline for one specific font, with diacritic accuracy as the main target.
 
 ## 1.3. Process Overview and Domain Challenges
 
@@ -275,7 +271,6 @@ The pipeline began by observing what Ideogram4 does on Vietnamese calligraphy pr
 
 Checkpoint instability became its own problem after the single-word phase. Compatible checkpoints that seemed to sit in the same optimization basin were averaged, borrowing from the model soups idea [13, 14] as a way to stabilize results without paying extra at inference time. The last phase moves to compound layouts: multi-word two-line data is generated from the target calligraphy font, starting from the best single-word checkpoint, and evaluated on a fixed compound panel.
 
-<!-- Figure placeholder: copy the final pipeline diagram to docs/thesis/figures/fig_1_1_research_pipeline.png -->
 ![Figure 1.1. Overall research pipeline for Vietnamese calligraphy image generation.](figures/fig_1_1_research_pipeline.png)
 
 **Figure 1.1.** Overall research pipeline for Vietnamese calligraphy image generation. The pipeline begins with baseline observation, proceeds through Qwen3-VL/DiT signal diagnosis and wide-target LoRA training, then stabilizes compatible checkpoints through averaging before moving to compound-layout training and fixed-seed evaluation.
@@ -284,7 +279,7 @@ Checkpoint instability became its own problem after the single-word phase. Compa
 
 Vietnamese itself is the first hurdle. Six tones, numerous vowel variants (`â`, `ă`, `ê`, `ô`, `ơ`, `ư`), and a tiny mark error corrupts the whole word. In calligraphy, marks must blend into the brushwork rather than sitting on top like a printed font. Too detached and the image loses its calligraphic quality; too blended and readers misread them.
 
-Fine-tuning and layout create the second hurdle. Attention-only LoRA gets me to 32–39/60 and then stalls; adjusting attention alone does not fix glyph geometry. Worse, the same training recipe can produce either a decent checkpoint or a severe collapse; one warm-continue round, for instance, suddenly sprouted spurious nặng dots everywhere. Multi-word images multiply the difficulty because the model has to juggle layout, spacing, character identity, and local glyph geometry all at once [10], [24–26].
+Fine-tuning and layout create the second hurdle. Attention-only LoRA reaches 32–39/60 and then stalls; adjusting attention alone does not fix glyph geometry. Worse, the same training recipe can produce either a decent checkpoint or a severe collapse; one warm-continue round, for instance, suddenly sprouted spurious nặng dots everywhere. Multi-word images multiply the difficulty because the model has to juggle layout, spacing, character identity, and local glyph geometry all at once [10], [24–26].
 
 ## 1.4. Literature Review
 
@@ -300,7 +295,7 @@ Diffusion models generate images through iterative denoising [4, 5], more stable
 
 Diffusion Transformers swap the U-Net for transformer blocks in the denoising network [7]. Transformers make it easier to mix text tokens and image tokens, but accurate text rendering is still hard because the model has to convert symbolic signals into spatial geometry [10], [24–26]. For Vietnamese, the signals that matter are often tiny yet linguistically decisive.
 
-Several recent models pair DiT with powerful text encoders [15], [17], [21–22]. Three open-source approaches were tested, revealing notably different architectural choices:
+Several recent models pair DiT with powerful text encoders [15], [17], [21–22]. Three open-source approaches were tested, revealing clearly different architectural choices:
 
 - **Qwen-Image** (Qwen Team, 20B params, MMDiT, Apache 2.0, arXiv 2508.02324) uses the Qwen2.5-VL text encoder and achieves state-of-the-art Chinese text rendering [21]. My zero-shot experiments showed very limited visual knowledge of diacritical Vietnamese: wrong vowels, missing consonants, inconsistent renderings across seeds, and tone marks omitted or misplaced. The VRAM cost alone would have made it impractical for local iteration.
 
@@ -316,7 +311,7 @@ Full fine-tuning of large text-to-image models is expensive and risks degrading 
 
 DreamBooth showed early on that targeted fine-tuning can specialize a generative model to a desired subject or concept [9]. The broader progress of image-text representation learning (CLIP, BLIP-2) makes clear how much image generation depends on conditioning quality [11, 12]. For LoRA specifically, scaling and rank behavior matter in practice, which is why careful control is maintained over adapter rank and update strength [27].
 
-One finding I want to flag here: LoRA target module selection matters more than one might expect. Attention-only LoRA could not push past the Vietnamese diacritic plateau. I had to expand into feed-forward and adaLN modulation to influence glyph geometry directly.
+One finding worth flagging: LoRA target module selection matters more than one might expect. Attention-only LoRA could not push past the Vietnamese diacritic plateau, which required expanding into feed-forward and adaLN modulation to influence glyph geometry directly.
 
 ### 1.4.5. Commercial Models and Research Gap
 
@@ -341,7 +336,6 @@ Table 1.1 summarizes the competitive landscape.
 
 The gap addressed: a reproducible fine-tuning pipeline that learns a specific font style and keeps Vietnamese diacritics accurate across both single-word and multi-word layouts.
 
-<!-- Figure placeholder: copy the final competitor comparison panel to docs/thesis/figures/fig_1_2_competitor_baseline_comparison.png -->
 ![Figure 1.2. Visual comparison of competitor methods and the proposed checkpoint.](figures/fig_1_2_competitor_baseline_comparison.png)
 
 **Figure 1.2.** Visual comparison of competitor methods and the proposed checkpoint. Comparable Vietnamese calligraphy prompts are compared across digital font rendering, Nano Banana 2 as a black-box commercial image generator, Qwen Image, ERNIE Image, base Ideogram4, and the final fine-tuned Ideogram4 checkpoint. The figure is intended to show the gap between orthographic correctness, calligraphic naturalness, reproducibility, and fine-tuning capability.
@@ -358,7 +352,7 @@ The contribution:
 
 This is presented as an integrated pipeline, not a list of isolated tricks. Signal probes, LoRA target selection, checkpoint averaging, compound training, and manual evaluation only make sense when combined to address the same bottleneck.
 
-Compared to where I started with Qwen-Image, the contribution has shifted in several ways. The backbone is Ideogram4, the bottleneck identified is DiT glyph binding rather than a globally diacritic-blind text encoder, and the objective expanded from reading individual words correctly to multi-word and long-sentence calligraphic behavior.
+Compared to the original Qwen-Image direction, the contribution has shifted in several ways. The backbone is Ideogram4, the bottleneck identified is DiT glyph binding rather than a globally diacritic-blind text encoder, and the objective expanded from reading individual words correctly to multi-word and long-sentence calligraphic behavior.
 
 ## 1.6. Thesis Structure
 
@@ -386,14 +380,12 @@ The Ideogram4 pipeline used in this work consists of three main components, base
 | Ideogram4 DiT | Generates image latent conditioned on text | Primary LoRA target |
 | VAE | Decodes latent into 1024×1024 image | Produces final image |
 
-<!-- Figure placeholder: copy the final architecture diagram to docs/thesis/figures/fig_2_1_ideogram4_architecture.png -->
 ![Figure 2.1. Ideogram4 architecture used in this thesis.](figures/fig_2_1_ideogram4_architecture.png)
 
 **Figure 2.1.** Ideogram4 architecture used in this thesis. The fine-tuning pipeline freezes the Qwen3-VL text encoder and Ideogram4 base weights, inserts LoRA adapters into selected DiT modules, and decodes the generated latent image through the VAE.
 
 The Qwen3-VL text encoder is kept frozen. Ideogram4 extracts signals from multiple layer taps of the text encoder, concatenates them into a large conditioning vector, then projects through `llm_cond_norm + llm_cond_proj` into the DiT [15, 16]. The probes in this work examine both tap-space and projection-space to see how far the diacritic signal persists.
 
-<!-- Figure placeholder: copy the final conditioning diagram to docs/thesis/figures/fig_2_2_qwen3vl_multilayer_conditioning.png -->
 ![Figure 2.2. Multi-layer Qwen3-VL conditioning fed into the DiT.](figures/fig_2_2_qwen3vl_multilayer_conditioning.png)
 
 **Figure 2.2.** Multi-layer Qwen3-VL conditioning fed into the DiT. Hidden states from multiple Qwen3-VL layers are concatenated, normalized, and projected before entering the Ideogram4 DiT. This figure supports the diagnostic question of whether Vietnamese diacritic signal is already weak at the conditioning interface or is lost later during glyph binding.
@@ -414,7 +406,7 @@ When multiple LoRA checkpoints sit in the same optimization basin but have diffe
 
 ## 2.4. Vietnamese Calligraphy: Visual and Linguistic Characteristics
 
-Quốc ngữ calligraphy combines the Latin alphabet, the Vietnamese diacritic system, and calligraphic brushwork. A single word can carry multiple layers of marks: circumflex or horn diacritics on vowels, plus tone marks. The errors I see most often: missing tone marks, hỏi/ngã confusion, spurious nặng dots, vowel substitutions (`ư/u`, `ơ/o`, `â/ă/a`), and character drops in multi-word images.
+Quốc ngữ calligraphy combines the Latin alphabet, the Vietnamese diacritic system, and calligraphic brushwork. A single word can carry multiple layers of marks: circumflex or horn diacritics on vowels, plus tone marks. Common errors in the experimental observations include missing tone marks, hỏi/ngã confusion, spurious nặng dots, vowel substitutions (`ư/u`, `ơ/o`, `â/ă/a`), and character drops in multi-word images.
 
 On the Unicode side, Vietnamese can be composed or decomposed. Tokenizers handle uppercase and lowercase differently. Coverage is therefore checked at the token ID level rather than relying on visible characters alone. The final compound set covers 406 Vietnamese diacritical token IDs.
 
@@ -451,7 +443,6 @@ On the Unicode side, Vietnamese can be composed or decomposed. Tokenizers handle
 
 Each experimental branch is managed with its own checkpoint name, log, and render folder. Evaluation panels use the same base seed to avoid confusing checkpoint improvements with seed variance. When a good checkpoint is found, it does not overwrite previous ones; it stays as an independent candidate.
 
-<!-- Figure placeholder: copy the final LoRA target diagram to docs/thesis/figures/fig_3_1_widetarget_lora_injection_points.png -->
 ![Figure 3.1. Wide-target LoRA insertion points in the Ideogram4 DiT.](figures/fig_3_1_widetarget_lora_injection_points.png)
 
 **Figure 3.1.** Wide-target LoRA insertion points in the Ideogram4 DiT. Compared with attention-only LoRA, the final target set includes attention projections, feed-forward layers, and adaLN modulation so that the adapter can influence both token interaction and glyph geometry.
@@ -477,11 +468,11 @@ The compound set consists of 4/5/7/8-word images split into two center-aligned l
 406/406 Vietnamese diacritical token IDs covered
 ```
 
-I designed the compound set after noticing that the model generates multi-word text better when trained directly on multi-word examples. This was a turning point: instead of optimizing single words and hoping for automatic generalization to sentences, I brought multi-word layouts into the training distribution.
+The compound set was designed after observing that the model generates multi-word text better when trained directly on multi-word examples. This was a turning point: instead of optimizing single words and hoping for automatic generalization to sentences, multi-word layouts were brought into the training distribution.
 
 ### 3.2.4. Bounding-Box-Free Prompts
 
-Bounding-box experiments disappointed me. Narrow cell-based or line-level bounding boxes were not consistently followed; some words overlapped in position or stayed incorrect. No-bbox prompts with center-aligned target images, on the other hand, let the model learn more natural layout rules. No-bounding-box prompts are therefore used for the compound bridge, letting the target data teach line alignment.
+Bounding-box experiments produced disappointing results. Narrow cell-based or line-level bounding boxes were not consistently followed; some words overlapped in position or stayed incorrect. No-bbox prompts with center-aligned target images, on the other hand, let the model learn more natural layout rules. No-bounding-box prompts are therefore used for the compound bridge, letting the target data teach line alignment.
 
 ![Figure 3.2. No-bounding-box and bounding-box layout comparison for compound prompts.](figures/fig_3_2_no_bbox_vs_bbox_layout_comparison.png)
 
@@ -495,7 +486,7 @@ Bounding-box experiments disappointed me. Narrow cell-based or line-level boundi
 
 ### 3.3.1. Qwen3-VL Signal Probe
 
-I wanted to know whether Qwen3-VL discards Vietnamese diacritic signal before the DiT ever sees it. The probe compares a canonical list of 990 words from `manifest_words.json` against a candidate lexicon of 7,165 words from the 7,184 set. The full report is in Appendix G. Results:
+The question was whether Qwen3-VL discards Vietnamese diacritic signal before the DiT ever sees it. The probe compares a canonical list of 990 words from `manifest_words.json` against a candidate lexicon of 7,165 words from the 7,184 set. The full report is in Appendix G. Results:
 
 **Table 3.3.** Qwen3-VL signal probe results.
 
@@ -524,13 +515,13 @@ The probe measures both tap-space and proj-space after `llm_cond_norm + llm_cond
 
 ### 3.3.3. Probe Interpretation
 
-The probes convinced me not to shift the entire strategy toward training the text encoder. Some words have nearby conditioning signals and can be mined, but many image errors happen even when Qwen signal remains distinguishable. For those words, the better move is to fix DiT/glyph binding through LoRA and correctly distributed visual data.
+Based on these probes, the strategy was not shifted entirely toward training the text encoder. Some words have nearby conditioning signals and can be mined, but many image errors occur even when Qwen signal remains distinguishable. For those words, the better direction is to fix DiT/glyph binding through LoRA and correctly distributed visual data.
 
 ## 3.4. Fine-Tuning Configuration
 
 ### 3.4.1. Attention-Only Baseline
 
-I tried attention-only LoRA first because it carries less risk and preserves the base model well. Results plateaued:
+Attention-only LoRA was tried first because it carries less risk and preserves the base model well. Results plateaued:
 
 ```text
 Approximately 32-39/60 on the fragile panel
@@ -555,7 +546,7 @@ The best single checkpoint reached 48/60. Warm-continue rounds were unpredictabl
 
 ### 3.4.3. Gentle Warm-Continue
 
-Gentle warm-continue uses a mild learning rate and starts from a good checkpoint. I learned the hard way that long blind chaining should be avoided. Each branch works better as an independent sample from the good region: if it passes the gate, it goes into the candidate soup.
+Gentle warm-continue uses a mild learning rate and starts from a good checkpoint. It was learned through experimentation that long blind chaining should be avoided. Each branch works better as an independent sample from the good region: if it passes the gate, it goes into the candidate soup.
 
 ### 3.4.4. Checkpoint Averaging
 
@@ -576,7 +567,7 @@ compound_lr3e5_from_gold4
 soup_lr3e5_gold4_9to1
 ```
 
-The `soup_e4r2r3r4` checkpoint became the stable Gold4 milestone with 6 errors on Eval28. From there, a follow-up branch at learning rate `3e-5` got to 5 errors; a light soup at 90% `lr3e5` branch + 10% Gold4 reached 4 errors and became my final compound checkpoint.
+The `soup_e4r2r3r4` checkpoint became the stable Gold4 milestone with 6 errors on Eval28. From there, a follow-up branch at learning rate `3e-5` got to 5 errors; a light soup at 90% `lr3e5` branch + 10% Gold4 reached 4 errors and became the final compound checkpoint.
 
 ## 3.5. Evaluation Protocol
 
@@ -598,7 +589,6 @@ Character correctness alone is not enough; it is also necessary to check whether
 
 ## 3.6. Results
 
-<!-- Figure placeholder: copy the final progression chart to docs/thesis/figures/fig_3_4_result_progression.png -->
 ![Figure 3.4. Result progression from the single-word plateau to the final compound checkpoint.](figures/fig_3_4_result_progression.png)
 
 **Figure 3.4.** Result progression from the single-word plateau to the final compound checkpoint. The chart should summarize the improvement path from attention-only LoRA, wide-target single-word training, checkpoint soup, compound bridge training, Gold4, and the final `soup_lr3e5_gold4_9to1` checkpoint.
@@ -627,7 +617,7 @@ Wide-target broke through the attention-only plateau, but warm-continue is volat
 
 ### 3.6.2. High-Variance Behavior
 
-Wide8 is worth discussing because it used the same general recipe but dropped sharply to 38/60 with many spurious nặng dots. The log showed no checkpoint corruption or NaN. My best explanation: the diacritic subsystem sits near a high-variance boundary, and a normal update can push the model into a bad region. This is exactly why I rely on soup and manual gating.
+Wide8 is worth discussing because it used the same general recipe but dropped sharply to 38/60 with many spurious nặng dots. The log showed no checkpoint corruption or NaN. The most plausible explanation is that the diacritic subsystem sits near a high-variance boundary, and a normal update can push the model into a bad region. This is the rationale for relying on soup and manual gating.
 
 ### 3.6.3. Compound Bridge Results
 
@@ -646,13 +636,13 @@ Wide8 is worth discussing because it used the same general recipe but dropped sh
 | `soup_lr3e5_gold4_3to1` | 6 |
 | `soup_lr3e5_gold4_9to1` | **4** |
 
-The post-Gold4 process taught me that both learning rate and soup ratio matter. The `5e-5` branch learned too aggressively and created many new errors. `2e-5` held at 6 errors but could not beat the milestone. `3e-5` turned out to be a better region, reducing solo errors to 5. When souping with Gold4, the 75/25 ratio dragged some old errors back; the 90/10 ratio kept most of the new branch's improvements and used Gold4 only as a light regularizer.
+The post-Gold4 process showed that both learning rate and soup ratio matter. The `5e-5` branch learned too aggressively and created many new errors. `2e-5` held at 6 errors but could not beat the milestone. `3e-5` turned out to be a better region, reducing solo errors to 5. When souping with Gold4, the 75/25 ratio dragged some old errors back; the 90/10 ratio kept most of the new branch's improvements and used Gold4 only as a light regularizer.
 
 ![Figure 3.6. Compound Eval28 before-and-after comparison.](figures/fig_3_6_compound_eval28_before_after.png)
 
 **Figure 3.6.** Compound Eval28 before-and-after comparison. Representative fixed-seed Eval28 prompts are shown for `soup567` and the final compound checkpoint `soup_lr3e5_gold4_9to1`, illustrating the reduction from 56/168 errors to 4/168 errors on multi-word two-line calligraphy images.
 
-Final compound checkpoint:
+Final compound checkpoint (full registry in Appendix D):
 
 ```text
 experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors
@@ -677,6 +667,8 @@ Dôi -> Dồi
 
 ### 3.6.4. Current Gold Checkpoints
 
+The final checkpoints identified during experimentation are summarized below. Full checkpoint paths and evaluation directory listings are recorded in Appendix D and Appendix E.
+
 Single-word gold:
 
 ```text
@@ -699,25 +691,25 @@ Both gold checkpoints have been published on Hugging Face at [phong09021998/viet
 
 ### 4.1.1. Theoretical Value
 
-What I found most surprising: Vietnamese diacritic errors in the Ideogram4 setup are not what I initially expected. I went in assuming the text encoder was globally blind to diacritics. The probes showed otherwise: Qwen3-VL retains diacritic signal in many cases. The real problem is the DiT not always binding that signal to the correct glyph geometry. This distinction changes the strategy: instead of retraining the text encoder, I get better results by adjusting the DiT at modules that influence character geometry.
+What was found most surprising: Vietnamese diacritic errors in the Ideogram4 setup are not what was initially expected. The initial assumption was that the text encoder was globally blind to diacritics. The probes showed otherwise: Qwen3-VL retains diacritic signal in many cases. The real problem is the DiT not always binding that signal to the correct glyph geometry. This distinction changes the strategy: instead of retraining the text encoder, better results come from adjusting the DiT at modules that influence character geometry.
 
-I also found that single-word and multi-word are related but genuinely distinct problems. A checkpoint that writes single words reasonably well can still fail badly on two-line layouts. If the goal is long sentences, direct training on multi-word layouts is not optional; it is necessary.
+It was also found that single-word and multi-word are related but genuinely distinct problems. A checkpoint that writes single words reasonably well can still fail badly on two-line layouts. If the goal is long sentences, direct training on multi-word layouts is not optional; it is necessary.
 
 ### 4.1.2. Practical Value
 
 This work delivers a reproducible technical pipeline for Vietnamese calligraphy image generation. It covers data creation from the target font, coverage checking at the tokenizer level, LoRA fine-tuning, checkpoint conversion, checkpoint averaging, evaluation rendering with fixed seeds, and manual word-level inspection. Every component is kept reproducible because this problem is extremely sensitive to seeds, checkpoints, and prompt formatting.
 
-The compound error reduction from 56/168 to 4/168 shows the pipeline can produce checkpoints that actually work for multi-word calligraphy. Beyond the numbers, I see this as a foundation for applications in graphic design, personalized greeting images, digital cultural preservation, and calligraphy education.
+The compound error reduction from 56/168 to 4/168 shows the pipeline can produce checkpoints that actually work for multi-word calligraphy. Beyond the numbers, the work serves as a foundation for applications in graphic design, personalized greeting images, digital cultural preservation, and calligraphy education.
 
 ## 4.2. Summary of Key Results
 
 The improvement trajectory was clearer than expected. Attention-only LoRA stalled at 32–39/60; individual attention modules alone cannot fix the Vietnamese diacritic bottleneck. When the LoRA target was expanded to more DiT modules, the best single checkpoint climbed to 48/60. Averaging compatible checkpoints then produced `soup567` at 52/60.
 
-The harder lesson: single-word performance does not automatically transfer to multi-word images. My single-word gold checkpoint still produced many errors on two-line layouts. After compound bridge training, a follow-up at learning rate `3e-5`, and a light 90/10 soup with the Gold4 milestone, errors on Eval28 dropped from 56/168 to 4/168. The remaining errors cluster in a few difficult diacritic pairs, no longer a global collapse.
+The harder lesson: single-word performance does not automatically transfer to multi-word images. The single-word gold checkpoint still produced many errors on two-line layouts. After compound bridge training, a follow-up at learning rate `3e-5`, and a light 90/10 soup with the Gold4 milestone, errors on Eval28 dropped from 56/168 to 4/168. The remaining errors cluster in a few difficult diacritic pairs, no longer a global collapse.
 
 ## 4.3. Current Limitations
 
-I want to be honest about what this work does not yet do. The most immediate constraint is the cost of manual evaluation: images are scored by hand, which is reliable for calligraphy but slow. The Eval28 panel enables quick iteration, and seed 7000 enables fair comparison (after seed confounding was discovered), but stronger statistical conclusions need larger benchmarks and more seeds.
+The limitations should be noted transparently. The most immediate constraint is the cost of manual evaluation: images are scored by hand, which is reliable for calligraphy but slow. The Eval28 panel enables quick iteration, and seed 7000 enables fair comparison (after seed confounding was discovered), but stronger statistical conclusions need larger benchmarks and more seeds.
 
 Style coverage is narrow. Only Thu Phap Thanh Cong Unicode was tested; generalization to other fonts is untested. Training data comes from digital calligraphy fonts, which gives control over orthography and diacritics but cannot capture the materiality of real hand-written calligraphy: paper texture, ink bleeding, imperfect pressure, the artist's personal layout.
 
@@ -725,19 +717,19 @@ Content scope needs expansion too. Compound 4/5/7/8-word images are closer to th
 
 ## 4.4. Future Directions
 
-The pipeline works well on the current compound panel, but I do not think the next step should be more of the same, chasing marginally better checkpoints on the same benchmark. What makes more sense is expanding scope, standardizing evaluation, and moving closer to practical use.
+The pipeline works well on the current compound panel, but the next step should not be more of the same, chasing marginally better checkpoints on the same benchmark. What makes more sense is expanding scope, standardizing evaluation, and moving closer to practical use.
 
-I would like to try multiple calligraphy fonts. The current work only covers Thu Phap Thanh Cong Unicode, but a practical system needs diverse Quốc ngữ styles. Building data for additional fonts would test whether the same DiT-LoRA pipeline can learn multiple brushwork styles while keeping diacritics accurate, marking the jump from a single-style model to a font-controllable system.
+A promising next direction is trying multiple calligraphy fonts. The current work only covers Thu Phap Thanh Cong Unicode, but a practical system needs diverse Quốc ngữ styles. Building data for additional fonts would test whether the same DiT-LoRA pipeline can learn multiple brushwork styles while keeping diacritics accurate, marking the jump from a single-style model to a font-controllable system.
 
-Real calligraphy photographs are another direction I want to explore. Digital font data gives stable orthographic supervision, but works by real artists carry richer brush dynamics, ink bleeding, paper texture, imperfect pressure, and more natural layout. My plan would be to use font-rendered data to stabilize characters and diacritics, then supplement with curated real calligraphy images to lift artistic quality.
+Real calligraphy photographs are another direction worth exploring. Digital font data gives stable orthographic supervision, but works by real artists carry richer brush dynamics, ink bleeding, paper texture, imperfect pressure, and more natural layout. A reasonable plan would be to use font-rendered data to stabilize characters and diacritics, then supplement with curated real calligraphy images to lift artistic quality.
 
-Longer, more natural Vietnamese content is also needed. Compound data moved past the single-word problem, but practical applications call for greetings, proper names, slogans, or short poems. Follow-up work should evaluate 9–16 word phrases with line breaks and layout rules closer to real calligraphic works.
+Longer, more natural Vietnamese content is also needed. Compound data moved past the single-word problem, but practical applications call for greetings, proper names, slogans, or short poems. Future work should evaluate 9–16 word phrases with line breaks and layout rules closer to real calligraphic works.
 
-On evaluation and deployment: larger benchmarks with more seeds and more sentence types are needed. A lightweight evaluator could flag missing marks, swapped marks, extra marks, or character substitutions, cutting manual scoring costs, though I would keep human judgment as the final call on aesthetic quality and ambiguous cases. Inference also needs to get cheaper before anyone can use this interactively. Quantization, optimized attention kernels, model compilation, or smaller adapters all point toward deploying the model into design tools, web services, or batch workflows.
+On evaluation and deployment: larger benchmarks with more seeds and more sentence types are needed. A lightweight evaluator could flag missing marks, swapped marks, extra marks, or character substitutions, cutting manual scoring costs, though human judgment should remain the final call on aesthetic quality and ambiguous cases. Inference also needs to get cheaper before anyone can use this interactively. Quantization, optimized attention kernels, model compilation, or smaller adapters all point toward deploying the model into design tools, web services, or batch workflows.
 
-The remaining 4 errors on Eval28 open another direction: anti-hallucination in text rendering. The model no longer fails broadly, but it still confuses some difficult diacritic and vowel pairs. Hard-word mining, replay data with correct glyphs, and layout-binding specialist adapters could address this group. As those pieces mature, I can imagine integrating the system into a tool where users input Vietnamese text, pick a calligraphy style, choose an image background, and get high-resolution output for design, cultural preservation, or education.
+The remaining 4 errors on Eval28 open another direction: anti-hallucination in text rendering. The model no longer fails broadly, but it still confuses some difficult diacritic and vowel pairs. Hard-word mining, replay data with correct glyphs, and layout-binding specialist adapters could address this group. As those pieces mature, the system could be integrated into a tool where users input Vietnamese text, pick a calligraphy style, choose an image background, and get high-resolution output for design, cultural preservation, or education.
 
-Looking back, this thesis builds an empirical Ideogram4 fine-tuning pipeline for Vietnamese calligraphy image generation. What the results showed me: accurate Vietnamese rendering needs a strong base model, yes, but also knowing where the diacritic signal persists, targeting the right DiT modules, stabilizing checkpoints, and training directly on the multi-word layout distribution that real applications demand.
+Looking back, this work builds an empirical Ideogram4 fine-tuning pipeline for Vietnamese calligraphy image generation. What the results show: accurate Vietnamese rendering needs a strong base model, yes, but also knowledge of where the diacritic signal persists, targeting the right DiT modules, stabilizing checkpoints, and training directly on the multi-word layout distribution that real applications demand.
 
 ---
 
@@ -798,20 +790,6 @@ Looking back, this thesis builds an empirical Ideogram4 fine-tuning pipeline for
 [27] D. Kalajdzievski, "A rank stabilization scaling factor for fine-tuning with LoRA," *arXiv:2312.03732*, Dec. 2023. [Online]. Available: https://arxiv.org/abs/2312.03732
 
 [28] T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer, "QLoRA: Efficient finetuning of quantized LLMs," in *Proc. 37th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, New Orleans, LA, USA, Dec. 2023, pp. 10088–10115.
-
----
-
-**Notes on the validity of selected references**
-
-- `[15]` Ideogram AI 2026: points to the official Ideogram 4.0 technical blog post at `https://ideogram.ai/blog/ideogram-4.0/`. This is the sole official source published by Ideogram AI as of this writing; *an arXiv-format technical report has not been released*. The web URL and access date `Jun. 28, 2026` are recorded in the reference entry.
-- `[16]` Qwen3-VL Technical Report (*arXiv:2511.21631*, submitted 2025-11-26): the official arXiv paper by the Qwen Team describing the Qwen3-VL architecture in detail. Updated after the initial draft was written. Previously this reference was listed generically as "technical report, 2026" because the arXiv version had not yet appeared; now it has an official arXiv ID (`https://arxiv.org/abs/2511.21631`) and can be directly looked up. Qwen3-VL describes dense 2B/4B/8B/32B and MoE 30B-A3B/235B-A22B variants, supporting 256K-token interleaved context. The version used by Ideogram4 is Qwen3-VL-8B-Instruct (the 8B dense variant).
-- `[17]` Baidu ERNIE-Image Team: points to the official blog post "Introducing ERNIE-Image" at `https://yiyan.baidu.com/blog/posts/ernie-image`. This is Baidu's official announcement source for ERNIE-Image, although a PDF-format technical report has not been widely released. The web URL and access date `Jun. 28, 2026` are recorded in the reference entry.
-- `[21]` Qwen-Image Technical Report (*arXiv:2508.02324*): this is the reference cited for the Qwen-Image architecture section, with an official arXiv ID (`https://arxiv.org/abs/2508.02324`) and the most peer-reviewable source.
-- `[18]` DiffSynth-Studio: open-source software reference. The repository URL (`https://github.com/modelscope/DiffSynth-Studio`), the 2024–2026 development span, and the specific commit hash (`6d103c0`, accessed 2026-06-05) used to load Ideogram4 are now recorded in the reference entry.
-
-References `[1]`–`[14]`, `[19]`, `[20]`, and `[23]`–`[28]` are widely published works, searchable via Google Scholar or arXiv; no authenticity issues.
-
-**Cross-referencing body ↔ reference list:** The model-specific citations used in Section 1.4.3 have been cross-checked against the reference list: Qwen-Image is cited with `[21]`, ERNIE-Image with `[17]`, Ideogram4 with `[15–16]`, and FLUX with `[22]`. General visual-text-rendering limitations are supported by `[10], [24–26]`, while flow-matching background is supported by `[19–20]`. In later revision rounds, reference `[16]` was updated from the generic "technical report, 2026" form to the official arXiv ID `2511.21631` after the Qwen Team published the full technical report.
 
 ---
 
@@ -891,25 +869,25 @@ docs/probe_reports/_QWEN3_VL_CUU_FAMILY_PROBE_2026-06-24.md
 
 ## Appendix H: Comparison Image List
 
-The following filenames are reserved for figures to be included in the completed thesis. Files marked as `READY` already exist in `docs/thesis/figures/`.
+The following filenames are reserved for figures in `docs/thesis/figures/`.
 
-**Table H.1.** Comparison image list and figure readiness status.
+**Table H.1.** Comparison image list.
 
-| Figure | Filename | Status | Expected Content |
-|---|---|---|---|
-| Figure 1.1 | `docs/thesis/figures/fig_1_1_research_pipeline.png` | READY | Overall research pipeline from baseline observation, signal probing, LoRA training, checkpoint soup, compound training, and final evaluation |
-| Figure 1.2 | `docs/thesis/figures/fig_1_2_competitor_baseline_comparison.png` | READY | Digital font, Nano Banana 2 commercial baseline, Qwen Image, ERNIE Image, base Ideogram4, and proposed checkpoint |
-| Figure 1.3 | `docs/thesis/figures/fig_1_3_base_model_capability_comparison.png` | READY | Qwen Image, ERNIE Image, and base Ideogram4 on Vietnamese calligraphy-style prompts before fine-tuning |
-| Figure 2.1 | `docs/thesis/figures/fig_2_1_ideogram4_architecture.png` | READY | Ideogram4 architecture used in this thesis: frozen Qwen3-VL, DiT with LoRA adapters, and VAE decoder |
-| Figure 2.2 | `docs/thesis/figures/fig_2_2_qwen3vl_multilayer_conditioning.png` | READY | Multi-layer Qwen3-VL hidden-state taps, concatenation, normalization, projection, and DiT conditioning |
-| Figure 3.1 | `docs/thesis/figures/fig_3_1_widetarget_lora_injection_points.png` | READY | Wide-target LoRA insertion points: attention, feed-forward, and adaLN modulation |
-| Figure 3.2 | `docs/thesis/figures/fig_3_2_no_bbox_vs_bbox_layout_comparison.png` | READY | Same six-word compound prompt under no-bbox, wide-bbox, and row-bbox conditions |
-| Figure 3.3 | `docs/thesis/figures/fig_3_3_font_reference_vs_model_generation.jpg` | READY | Font-rendered reference compared with model-generated compound layout |
-| Figure 3.4 | `docs/thesis/figures/fig_3_4_result_progression.png` | READY | Result progression from attention-only LoRA to wide-target, `soup567`, compound bridge, Gold4, and final `soup_lr3e5_gold4_9to1` |
-| Figure 3.5 | `docs/thesis/figures/fig_3_5_single_word_before_after_examples.png` | READY | Before and after examples of difficult single words with wide-target/checkpoint soup |
-| Figure 3.6 | `docs/thesis/figures/fig_3_6_compound_eval28_before_after.png` | READY | Compound Eval28 examples comparing `soup567` with the final checkpoint `soup_lr3e5_gold4_9to1` |
-| Figure 3.7 | `docs/thesis/figures/fig_3_7_remaining_error_cases.png` | READY | Remaining errors: `Hấn`, `Chịt`, `Huyên`, `Dôi` |
-| Figure 3.8 | `docs/thesis/figures/fig_3_8_calligraphy_with_base_model_capability.png` | READY | Context-rich prompts testing whether the fine-tuned checkpoint preserves Ideogram4's base image generation capability when adding Vietnamese calligraphic text |
+| Figure | Filename | Expected Content |
+|---|---|---|
+| Figure 1.1 | `fig_1_1_research_pipeline.png` | Overall research pipeline from baseline observation, signal probing, LoRA training, checkpoint soup, compound training, and final evaluation |
+| Figure 1.2 | `fig_1_2_competitor_baseline_comparison.png` | Digital font, Nano Banana 2 commercial baseline, Qwen Image, ERNIE Image, base Ideogram4, and proposed checkpoint |
+| Figure 1.3 | `fig_1_3_base_model_capability_comparison.png` | Qwen Image, ERNIE Image, and base Ideogram4 on Vietnamese calligraphy-style prompts before fine-tuning |
+| Figure 2.1 | `fig_2_1_ideogram4_architecture.png` | Ideogram4 architecture used in this thesis: frozen Qwen3-VL, DiT with LoRA adapters, and VAE decoder |
+| Figure 2.2 | `fig_2_2_qwen3vl_multilayer_conditioning.png` | Multi-layer Qwen3-VL hidden-state taps, concatenation, normalization, projection, and DiT conditioning |
+| Figure 3.1 | `fig_3_1_widetarget_lora_injection_points.png` | Wide-target LoRA insertion points: attention, feed-forward, and adaLN modulation |
+| Figure 3.2 | `fig_3_2_no_bbox_vs_bbox_layout_comparison.png` | Same six-word compound prompt under no-bbox, wide-bbox, and row-bbox conditions |
+| Figure 3.3 | `fig_3_3_font_reference_vs_model_generation.jpg` | Font-rendered reference compared with model-generated compound layout |
+| Figure 3.4 | `fig_3_4_result_progression.png` | Result progression from attention-only LoRA to wide-target, `soup567`, compound bridge, Gold4, and final `soup_lr3e5_gold4_9to1` |
+| Figure 3.5 | `fig_3_5_single_word_before_after_examples.png` | Before and after examples of difficult single words with wide-target/checkpoint soup |
+| Figure 3.6 | `fig_3_6_compound_eval28_before_after.png` | Compound Eval28 examples comparing `soup567` with the final checkpoint `soup_lr3e5_gold4_9to1` |
+| Figure 3.7 | `fig_3_7_remaining_error_cases.png` | Remaining errors: `Hấn`, `Chịt`, `Huyên`, `Dôi` |
+| Figure 3.8 | `fig_3_8_calligraphy_with_base_model_capability.png` | Context-rich prompts testing whether the fine-tuned checkpoint preserves Ideogram4's base image generation capability when adding Vietnamese calligraphic text |
 
 ## Appendix I: Prompts Used for Comparison Figures
 
@@ -949,7 +927,7 @@ experiments/results/coverage_v10_eval/thesis_scene_candidates/phuc_duc_seed7002/
 experiments/results/coverage_v10_eval/thesis_scene_candidates/phuc_duc_seed7002/prompt_tam_duc_tri_nhan.json
 ```
 
-These phrases were selected after trying several variants. The phrase `Lộc` was not used in the promote figure because it tends to lose the `ô` circumflex, while `Vượng` produced more acceptable results in the same context.
+These phrases were selected after trying several variants. The phrase `Lộc` was not used in the proposed figure because it tends to lose the `ô` circumflex, while `Vượng` produced more acceptable results in the same context.
 
 ## Appendix J: Reference and Evidence Checklist
 
