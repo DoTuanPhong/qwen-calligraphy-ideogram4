@@ -1,0 +1,46 @@
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+
+# ===== Virtual environments =====
+.venv/
+venv/
+env/
+
+# ===== IDEs =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+
+# ===== Package caches =====
+.pip-cache/
+.pip_cache/
+.cache/
+
+# ===== Big data / outputs (not source code) =====
+data/raw/
+data/processed/
+data/test/
+data/models/
+data/dataset_*/
+models/
+experiments/checkpoints/
+experiments/results/
+experiments/logs/
+
+# ===== Logs and temporary files =====
+*.log
+*.pid
+*.bak
+*.tmp
+scratch/
