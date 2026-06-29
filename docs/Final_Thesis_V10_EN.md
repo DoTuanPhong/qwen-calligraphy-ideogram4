@@ -303,7 +303,7 @@ Several recent models pair DiT with powerful text encoders [15], [17], [21–22]
 
 - **Ideogram4** (Ideogram AI, 9.3B params, published 2026-06-03) is Ideogram's first open-source text-to-image model, trained from scratch [15]. It uses a fully single-stream Diffusion Transformer (34 layers) with concatenated text/image tokens and no separate text/image branch. The text encoder is Qwen3-VL-8B-Instruct, with hidden states extracted from 13 intermediate layers [16]. It uses flow-matching [19–20] rather than pure DDPM, supports native resolution from 256 to 2048, and the FP8 base + BF16 LoRA design enables local fine-tuning. Among the open-weight models surveyed, Ideogram4 produces the best text rendering (surpassing Qwen-Image 20B, FLUX.2 32B, HunyuanImage 3.0 80B MoE).
 
-What struck me across all three: they all use Qwen3-VL/Mistral3-family (or equivalent) text encoders for conditioning. My initial research question about *linguistic signal in the Qwen family* stays relevant no matter which image generation backbone is chosen.
+A notable pattern across all three: they all use Qwen3-VL/Mistral3-family (or equivalent) text encoders for conditioning. The original research question about *linguistic signal in the Qwen family* stays relevant no matter which image generation backbone is chosen.
 
 ### 1.4.4. Parameter-Efficient Fine-Tuning
 
