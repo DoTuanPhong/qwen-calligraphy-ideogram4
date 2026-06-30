@@ -36,7 +36,7 @@ FPT University
 
 Quốc ngữ calligraphy renders the Latin-based Vietnamese script through calligraphic brushwork. Tone marks and vowel diacritics are linguistically mandatory, so a visually appealing image can still fail semantically if the model renders `Cữu` as `Cưu` or `Chưởng` as `Chưỡng`. Modern text-to-image models struggle with this because Vietnamese relies on small yet semantically decisive marks that must integrate with brushstroke geometry.
 
-Registered under the Qwen Image topic, the work was redirected to Ideogram4 after Qwen Image proved too VRAM-heavy and ERNIE Image showed tokenizer instability on capitalized diacritical forms. Ideogram4 uses Qwen3-VL-8B-Instruct as the text encoder, so the original research question about Qwen-family linguistic signal remains applicable. The main contribution is a DiT-LoRA pipeline organized around glyph binding: probing where diacritic signal persists in the conditioning, expanding the LoRA target from attention-only to `attention.qkv`, `attention.o`, `feed_forward.w1`/`w2`/`w3`, and `adaln_modulation`, stabilizing high-variance checkpoints through averaging, then training directly on multi-word layouts.
+Registered under the Qwen Image topic, the research direction evolved through three phases (Section 1.2.1): from fine-tuning Qwen Image directly (Phase 1), to investigating the underlying Qwen-family text encoder signal after Qwen Image was found impractical (Phase 2), to implementing the diagnostic question on Ideogram4 (Phase 3), which uses Qwen3-VL-8B-Instruct as text encoder and was selected because Qwen Image proved too VRAM-heavy and ERNIE Image showed tokenizer instability on capitalized diacritical forms. The common thread across the three phases is the Qwen-family text encoder as the linguistic conditioning source and Vietnamese diacritic accuracy as the evaluation target. The main contribution is a DiT-LoRA pipeline organized around glyph binding: probing where diacritic signal persists in the conditioning, expanding the LoRA target from attention-only to `attention.qkv`, `attention.o`, `feed_forward.w1`/`w2`/`w3`, and `adaln_modulation`, stabilizing high-variance checkpoints through averaging, then training directly on multi-word layouts.
 
 Attention-only LoRA plateaued at 32–39/60. The wide-target configuration broke through the plateau (48/60 best single, 52/60 after averaging). Since single-word gains did not transfer to multi-word images, a compound dataset of 4/5/7/8-word images covering all 406 Vietnamese diacritical token IDs was built. On the Eval28 panel (168 words), checkpoint averaging and a final `3e-5` follow-up reduced errors from 56/168 to 4/168 (97.6% word-level accuracy). Accurate Vietnamese rendering requires correct diagnosis of where the diacritic signal lives, proper DiT module adjustment, checkpoint stabilization, and direct training on the multi-word layout distribution.
 
@@ -245,21 +245,35 @@ I moved to Ideogram4 because its published technical description reports strong 
 
 ## 1.2. Research Objectives and Scope
 
-### 1.2.1. Scope Change from Qwen-Image to Ideogram4
+### 1.2.1. Research Objective Evolution
 
-**Administrative note on the title.** The official title retains "Qwen Image" for administrative continuity with the registered thesis proposal. The title reflects the original registered research direction and the underlying research objective: fine-tuning a modern text-to-image model for Vietnamese calligraphy with accurate diacritics. The implementation backbone is Ideogram4, but the research question about Qwen-family linguistic signal remains intact because the Ideogram4 text encoder (Qwen3-VL-8B-Instruct) comes from the same Qwen family.
+The thesis research objective evolved through three documented phases, all aligned with the registered title "Fine-tuning Qwen Image for Generating Vietnamese Calligraphy Images with Accurate Diacritics." The evolution is summarized below; Section 1.1 provides the experimental evidence for each transition.
 
-The implementation scope shifted during experimentation, for reasons detailed in Section 1.1. Ideogram4 offered a stronger text-rendering foundation, practical VRAM requirements for local LoRA training, and a Qwen3-VL-based conditioning pipeline [15, 16], making it a natural fit for the registered objective.
+**Phase 1 (registered direction, baseline plan).** The initial objective was to fine-tune Qwen Image, the most recent DiT model in the Qwen family at the time of registration, on a Vietnamese calligraphy dataset to improve diacritic rendering accuracy. The registered title reflects this baseline plan.
 
-The experimental chapters that follow report the Ideogram4 DiT-LoRA pipeline.
+**Phase 2 (text encoder investigation, diagnostic question).** After Qwen Image was found impractical for local training (Section 1.1, paragraphs on VRAM and Vietnamese baseline), the research direction shifted to investigating the underlying Qwen-family text encoder signal. The question became more specific: where does the linguistic signal bottleneck originate, in the text encoder or in the image-generation backbone? This diagnostic question is the actual research contribution and remains valid regardless of which image-generation backbone is used.
 
-### 1.2.2. Research Objectives and Boundaries
+**Phase 3 (Ideogram4 implementation, current scope).** Ideogram4 was selected as the implementation backbone because it uses a Qwen3-VL text encoder (the same family as Qwen Image) and has a stronger text-rendering foundation. This makes Ideogram4 a natural fit for the Phase 2 diagnostic question: it lets the same research question be answered with a model that is workable in the available compute environment.
+
+**Common thread across all three phases.** The Qwen-family text encoder remains the linguistic conditioning source in every phase, and Vietnamese diacritic accuracy remains the evaluation target. The implementation backbone changes from Qwen Image (Phase 1) to Ideogram4 (Phase 3), but the research question about Qwen-family conditioning for Vietnamese diacritics does not change.
+
+The phase transitions in this evolution were driven by experimental evidence (Section 1.1), not by drift or convenience. The remaining sections of this thesis report the Phase 3 implementation, which is the only phase that produced a reproducible checkpoint.
+
+### 1.2.2. Scope Change from Qwen-Image to Ideogram4
+
+**Administrative note on the title.** The official title retains "Qwen Image" for administrative continuity with the registered thesis proposal. The title reflects the original registered research direction (Phase 1) and the underlying research objective (Section 1.2.1): fine-tuning a modern text-to-image model with a Qwen-family text encoder for Vietnamese calligraphy with accurate diacritics. The implementation backbone is Ideogram4, but the research question about Qwen-family linguistic signal remains intact because the Ideogram4 text encoder (Qwen3-VL-8B-Instruct) comes from the same Qwen family.
+
+The implementation scope shifted from Phase 1 (Qwen Image) to Phase 3 (Ideogram4), for reasons detailed in Section 1.1. Ideogram4 offered a stronger text-rendering foundation, practical VRAM requirements for local LoRA training, and a Qwen3-VL-based conditioning pipeline [15, 16], making it a natural fit for the Phase 2 diagnostic question.
+
+The experimental chapters that follow report the Phase 3 Ideogram4 DiT-LoRA pipeline.
+
+### 1.2.3. Research Objectives and Boundaries
 
 The goal is to build a fine-tuning pipeline that generates Vietnamese calligraphy images with accurate diacritics. The implementation uses Ideogram4 and LoRA, staying within the registered Qwen Image topic [8, 15].
 
 More concretely, the research analyzes where Ideogram4 goes wrong on Vietnamese calligraphy, specifically whether errors come from the Qwen3-VL text encoder, the prompt, insufficient LoRA capacity, or the DiT's glyph-binding behavior. From that diagnosis, a LoRA configuration is designed to improve diacritic rendering without full fine-tuning; data and evaluation panels are built for both single-word and multi-word layouts; and single-word gains are checked for transfer to compound layouts. The aim is to deliver not just a checkpoint but a reproducible pipeline: training, checkpoint conversion, evaluation rendering, and manual scoring.
 
-I deliberately keep the experimental scope narrow. The base model is Ideogram4 with a frozen Qwen3-VL text encoder. LoRA adapters go on the DiT backbone; the target style is Thu Phap Thanh Cong Unicode at 1024×1024. Word-level accuracy is evaluated by human inspection, since OCR is not reliable enough for stylized Vietnamese calligraphy. Content ranges from single words to compound 4/5/7/8-word images split across two lines.
+The experimental scope is deliberately kept narrow. The base model is Ideogram4 with a frozen Qwen3-VL text encoder. LoRA adapters go on the DiT backbone; the target style is Thu Phap Thanh Cong Unicode at 1024×1024. Word-level accuracy is evaluated by human inspection, since OCR is not reliable enough for stylized Vietnamese calligraphy. Content ranges from single words to compound 4/5/7/8-word images split across two lines.
 
 The claim is not to solve all calligraphic styles or all forms of Vietnamese text rendering. The scope is an experimental pipeline for one specific font, with diacritic accuracy as the main target.
 
@@ -691,9 +705,9 @@ Both gold checkpoints have been published on Hugging Face at [phong09021998/viet
 
 ### 4.1.1. Theoretical Value
 
-What was found most surprising: Vietnamese diacritic errors in the Ideogram4 setup are not what was initially expected. The initial assumption was that the text encoder was globally blind to diacritics. The probes showed otherwise: Qwen3-VL retains diacritic signal in many cases. The real problem is the DiT not always binding that signal to the correct glyph geometry. This distinction changes the strategy: instead of retraining the text encoder, better results come from adjusting the DiT at modules that influence character geometry.
+The probes revealed a deviation from the initial hypothesis: Vietnamese diacritic errors in the Ideogram4 setup were not primarily a text-encoder-blindness problem. The initial assumption was that the text encoder was globally blind to diacritics. The probes showed otherwise. Qwen3-VL retains diacritic signal in many cases, and the real problem is the DiT not always binding that signal to the correct glyph geometry. This distinction changes the strategy: instead of retraining the text encoder, better results come from adjusting the DiT at modules that influence character geometry. This finding also validates the Phase 2 research question (Section 1.2.1) about Qwen-family conditioning, by showing that the bottleneck lies downstream of the encoder rather than in it.
 
-It was also found that single-word and multi-word are related but genuinely distinct problems. A checkpoint that writes single words reasonably well can still fail badly on two-line layouts. If the goal is long sentences, direct training on multi-word layouts is not optional; it is necessary.
+The experimental results also show that single-word and multi-word problems are related but genuinely distinct. A checkpoint that writes single words reasonably well can still fail badly on two-line layouts. If the goal is long sentences, direct training on multi-word layouts is necessary rather than optional.
 
 ### 4.1.2. Practical Value
 
