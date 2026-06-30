@@ -3,21 +3,24 @@ title: "Fine-tuning Qwen Image for Generating Vietnamese Calligraphy Images with
 author: "Đỗ Tuấn Phong"
 date: "June 2026"
 abstract: |
-  Vietnamese calligraphy (Quốc ngữ thư pháp) is a unique artistic
-  tradition that combines Latin-based orthography with dense
-  tone-mark diacritics. Modern text-to-image models can produce
-  aesthetically rich calligraphy but routinely fail on Vietnamese
-  tone-mark accuracy. This thesis investigates an open-source
-  Ideogram4 DiT-LoRA pipeline that targets Vietnamese diacritic
-  accuracy as its primary evaluation metric. A key contribution
-  is the wide-target LoRA injection (6 modules: attention.qkv,
-  attention.o, feed_forward.w1/w2/w3, adaln_modulation), diagnostic
-  probes on the Qwen3-VL text encoder, checkpoint averaging for
-  variance reduction, and direct training on a compound
-  multi-word dataset covering 406/406 Vietnamese diacritical
-  token IDs. On the Eval28 compound panel (28 images, 168 words),
-  the pipeline reduces errors from 56/168 to 4/168 (97.6% word-level
-  accuracy) within the Thu Phap Thanh Cong Unicode evaluation panel.
+  Quốc ngữ calligraphy renders the Latin-based Vietnamese script
+  through calligraphic brushwork. Tone marks and vowel diacritics
+  are linguistically mandatory, so a visually appealing image can
+  still fail semantically if the model renders Cữu as Cưu or
+  Chưởng as Chưỡng. Modern text-to-image models struggle with this
+  because Vietnamese relies on small yet semantically decisive
+  marks that must integrate with brushstroke geometry. Registered
+  under the Qwen Image topic, the research direction evolved
+  through three phases (Section 1.2.1): from fine-tuning Qwen
+  Image directly (Phase 1), to investigating the underlying
+  Qwen-family text encoder signal (Phase 2), to implementing the
+  diagnostic question on Ideogram4 (Phase 3). The main
+  contribution is a DiT-LoRA pipeline organized around glyph
+  binding, with wide-target LoRA on 6 DiT modules, checkpoint
+  averaging, and direct training on multi-word layouts. On the
+  Eval28 panel (168 words), errors reduced from 56/168 to 4/168
+  (97.6% word-level accuracy) within the Thu Phap Thanh Cong
+  Unicode evaluation panel used here.
 ---
 
 MINISTRY OF EDUCATION AND TRAINING
