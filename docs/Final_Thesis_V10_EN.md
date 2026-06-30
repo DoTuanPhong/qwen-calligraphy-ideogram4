@@ -305,7 +305,7 @@ Fine-tuning and layout create the second hurdle. Attention-only LoRA reaches 32â
 
 ### 1.4.1. GAN-Based Methods
 
-GANs train a generator and discriminator adversarially [1]. For calligraphy, they have been used to convert printed glyphs into calligraphic style [2, 3]. Mode collapse remains a risk, and covering all Vietnamese diacritic combinations is difficult with this architecture.
+GANs train a generator and discriminator adversarially [1]. For Chinese calligraphy, GAN-based methods have been developed to convert printed glyphs into calligraphic style or to perform few-shot style transfer [2, 29, 30]. Mode collapse remains a known risk, and covering all Vietnamese diacritic combinations is difficult with this architecture.
 
 ### 1.4.2. Diffusion Models
 
@@ -337,7 +337,7 @@ One finding worth flagging: LoRA target module selection matters more than one m
 
 **Existing works in adjacent areas.** Several adjacent research areas have explored calligraphy generation or Vietnamese text rendering, but none combine fine-tuning with Vietnamese diacritic accuracy targets:
 
-- **Chinese calligraphy generation** uses GAN-based and diffusion-based methods (e.g. CalliGAN [2]) but targets a logographic script without tone marks; diacritic accuracy is not a defined metric. The reported metrics focus on visual similarity (SSIM [23], FID) and character-class recognition, not on tone-mark-level orthographic correctness.
+- **Chinese calligraphy generation** uses GAN-based and diffusion-based methods (e.g. CalliGAN [2], Calliffusion [29], ZiGAN [30]) but targets a logographic script without tone marks; diacritic accuracy is not a defined metric. The reported metrics focus on visual similarity (SSIM [23], FID) and character-class recognition, not on tone-mark-level orthographic correctness.
 
 - **Open-source text-to-image models** (Qwen-Image [21], ERNIE-Image [17], Ideogram4 [15]) report strong general text-rendering performance but only in their default languages (Chinese, English, general). Their published technical descriptions do not report Vietnamese diacritic rendering accuracy on stylized calligraphy, and the available models do not ship fine-tuning recipes for Vietnamese fonts.
 
@@ -827,6 +827,10 @@ Looking back, this work builds an empirical Ideogram4 fine-tuning pipeline for V
 [27] D. Kalajdzievski, "A rank stabilization scaling factor for fine-tuning with LoRA," *arXiv:2312.03732*, Dec. 2023. [Online]. Available: https://arxiv.org/abs/2312.03732
 
 [28] T. Dettmers, A. Pagnoni, A. Holtzman, and L. Zettlemoyer, "QLoRA: Efficient finetuning of quantized LLMs," in *Proc. 37th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, New Orleans, LA, USA, Dec. 2023, pp. 10088â€“10115.
+
+[29] Q. Liao, G. Xia, and Z. Wang, "Calliffusion: Chinese calligraphy generation and style transfer with diffusion modeling," *arXiv:2305.19124*, May 2023. [Online]. Available: https://arxiv.org/abs/2305.19124
+
+[30] Q. Wen, S. Li, and B. Wang, "ZiGAN: Fine-grained Chinese calligraphy font generation via a few-shot style transfer approach," *arXiv:2108.03596*, Aug. 2021. [Online]. Available: https://arxiv.org/abs/2108.03596
 
 ---
 
