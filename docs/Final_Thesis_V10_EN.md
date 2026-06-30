@@ -434,11 +434,11 @@ The DiT is where LoRA is inserted. Key modules include attention, feed-forward, 
 
 ## 2.3. Parameter-Efficient Fine-Tuning Techniques
 
-LoRA assumes weight updates can be approximated by the product of two low-rank matrices [8]. Given original weight `W`, LoRA adds:
+LoRA assumes weight updates can be approximated by the product of two low-rank matrices [8]. Given original weight `W`, the LoRA-adapted weight `W'` follows the standard decomposition
 
-```text
-W' = W + B A * scale
-```
+$$W' = W + \frac{\alpha}{r} B A$$
+
+where $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times d}$ are the two low-rank factors ($r \ll d$), and $\alpha$ is the scaling factor. For rsLoRA [27], the scale is modified to $\alpha / \sqrt{r}$ to stabilize training at higher ranks.
 
 FP8 base weights are kept frozen while the LoRA branch operates in BF16. This follows the general idea of parameter-efficient adaptation over frozen or quantized base models [8, 28]; the exact FP8/BF16 conversion details are specific to the local Ideogram4 pipeline. After training, checkpoints need conversion to the correctly scaled inference format.
 
@@ -499,14 +499,16 @@ Token coverage is checked at the tokenizer level because the same character can 
 
 ### 3.2.3. Compound Dataset
 
-The compound set consists of 4/5/7/8-word images split into two center-aligned lines, rendered from the Thu Phap Thanh Cong Unicode font for stable targets. In total:
+The compound set consists of 4/5/7/8-word images split into two center-aligned lines, rendered from the Thu Phap Thanh Cong Unicode font for stable targets. Table 3.4 summarizes the dataset composition.
 
-```text
-2808 compound images
-147 supplementary single-word images
-2955 metadata records
-406/406 Vietnamese diacritical token IDs covered
-```
+**Table 3.4.** Compound dataset composition.
+
+| Item | Count |
+|---|---:|
+| Compound images (4/5/7/8 words) | 2808 |
+| Supplementary single-word images | 147 |
+| Metadata records (total) | 2955 |
+| Vietnamese diacritical token IDs covered | 406/406 |
 
 The compound set was designed after observing that the model generates multi-word text better when trained directly on multi-word examples. As a result, multi-word layouts were brought into the training distribution instead of optimizing single words and hoping for automatic generalization to sentences.
 
@@ -590,22 +592,13 @@ Gentle warm-continue uses a mild learning rate and starts from a good checkpoint
 
 ### 3.4.4. Checkpoint Averaging
 
-The `soup567` checkpoint was created by averaging the best r5, r6, r7 checkpoints:
+The `soup567` checkpoint was created by averaging the best three single-checkpoint weights (`r5`, `r6`, `r7`) element-wise, following the model soups recipe of Wortsman et al. [13]. Let $W_i$ denote the weight tensor of checkpoint $i$, and $\bar{W}_{\text{soup}}$ the averaged weight. The operation is
 
-```text
-soup567 = mean(r5, r6, r7)
-```
+$$\bar{W}_{\text{soup567}} = \frac{1}{3} \sum_{i \in \{r5, r6, r7\}} W_i.$$
 
-The result hit 52/60, beating every previous single checkpoint. Adding r9 to make `soup5679` stayed at 52/60, no gain but stable.
+The averaged checkpoint hit 52/60 on the single-word fragile panel, beating every previous single checkpoint. Adding `r9` to form `soup5679 = mean(r5, r6, r7, r9)` stayed at 52/60 with no gain but more stable behavior across seeds.
 
-For the compound bridge, averaging continued:
-
-```text
-soup_e4r2r3
-soup_e4r2r3r4
-compound_lr3e5_from_gold4
-soup_lr3e5_gold4_9to1
-```
+For the compound bridge, the same averaging procedure was applied iteratively across the four rounds (`e4`, `r2`, `r3`, `r4`), each combining the latest branch output with the previous stable checkpoint. The sequence of compound soup checkpoints was: `soup_e4r2r3` → `soup_e4r2r3r4` (the Gold4 milestone) → `compound_lr3e5_from_gold4` → `soup_lr3e5_gold4_9to1` (the final compound gold, 90% new branch + 10% Gold4).
 
 The `soup_e4r2r3r4` checkpoint became the stable Gold4 milestone with 6 errors on Eval28. From there, a follow-up branch at learning rate `3e-5` got to 5 errors; a light soup at 90% `lr3e5` branch + 10% Gold4 reached 4 errors and became the final compound checkpoint.
 
@@ -688,14 +681,16 @@ Final compound checkpoint (full registry in Appendix D):
 experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors
 ```
 
-Remaining errors on Eval28:
+Remaining errors on Eval28 are concentrated in visually close Vietnamese diacritic or vowel variants (Table 3.7).
 
-```text
-Hấn -> Hẩn
-Chịt -> Chút
-Huyên -> Huyện
-Dôi -> Dồi
-```
+**Table 3.7.** Remaining errors of the current compound gold checkpoint.
+
+| Target | Predicted | Error type |
+|---|---|---|
+| `Hấn` | `Hẩn` | Tone-mark substitution (nặng → huyền) |
+| `Chịt` | `Chút` | Vowel substitution (ị → ú) |
+| `Huyên` | `Huyện` | Tone-mark substitution (ngang → hỏi) |
+| `Dôi` | `Dồi` | Tone-mark substitution (sắc → nặng) |
 
 ![Figure 3.7. Remaining errors of the current compound gold checkpoint.](figures/fig_3_7_remaining_error_cases.png)
 
@@ -707,19 +702,14 @@ Dôi -> Dồi
 
 ### 3.6.4. Current Gold Checkpoints
 
-The final checkpoints identified during experimentation are summarized below. Full checkpoint paths and evaluation directory listings are recorded in Appendix D and Appendix E.
+The final checkpoints identified during experimentation are summarized in Table 3.8. Full checkpoint paths and evaluation directory listings are recorded in Appendix D and Appendix E.
 
-Single-word gold:
+**Table 3.8.** Final gold checkpoints released with the thesis.
 
-```text
-experiments/checkpoints/coverage_v10_widetarget_soup567/step-soup_infer.safetensors
-```
-
-Compound gold:
-
-```text
-experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors
-```
+| Checkpoint | Relative path (full path in Appendix D) |
+|---|---|
+| Single-word gold (`soup567`) | `experiments/checkpoints/coverage_v10_widetarget_soup567/step-soup_infer.safetensors` |
+| Compound gold (`soup_lr3e5_gold4_9to1`) | `experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors` |
 
 Both gold checkpoints have been published on Hugging Face at [phong09021998/vietnamese-calligraphy-ideogram4-lora](https://huggingface.co/phong09021998/vietnamese-calligraphy-ideogram4-lora) for public accessibility and replication. The restructured source code and thesis assets are on GitHub at [DoTuanPhong/qwen-calligraphy-ideogram4](https://github.com/DoTuanPhong/qwen-calligraphy-ideogram4).
 
