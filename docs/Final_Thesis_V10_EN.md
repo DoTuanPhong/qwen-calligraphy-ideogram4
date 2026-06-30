@@ -547,11 +547,7 @@ Takeaway: Qwen3-VL is not globally blind to diacritics. But there is a large eno
 
 ### 3.3.2. Cưu/Cừu/Cữu Family Probe
 
-Training rounds kept producing `Cưu` and `Cữu` as `Cừu`, so a small probe on the six tones was run. The detailed report is in Appendix G:
-
-```text
-Cưu, Cừu, Cứu, Cửu, Cữu, Cựu
-```
+Training rounds kept producing `Cưu` and `Cữu` as `Cừu`, so a small probe on the six tones (Cưu, Cừu, Cứu, Cửu, Cữu, Cựu) was run. The detailed report is in Appendix G.
 
 The probe measures both tap-space and proj-space after `llm_cond_norm + llm_cond_proj`. Results do not strongly support the hypothesis that `Cừu` is a global attractor in Qwen conditioning. This tilts the conclusion toward DiT/glyph-binding or deeper visual priors.
 
@@ -563,11 +559,7 @@ Based on these probes, the strategy was not shifted entirely toward training the
 
 ### 3.4.1. Attention-Only Baseline
 
-Attention-only LoRA was tried first because it carries less risk and preserves the base model well. Results plateaued:
-
-```text
-Approximately 32-39/60 on the fragile panel
-```
+Attention-only LoRA was tried first because it carries less risk and preserves the base model well. Results plateaued at approximately 32–39/60 on the fragile panel.
 
 Vietnamese diacritic errors do not live solely in the attention pathway; intervention was needed in modules that more strongly affect stroke geometry.
 
@@ -675,11 +667,7 @@ The post-Gold4 process showed that both learning rate and soup ratio matter. The
 
 **Figure 3.6.** Compound Eval28 before-and-after comparison. Representative fixed-seed Eval28 prompts are shown for `soup567` and the final compound checkpoint `soup_lr3e5_gold4_9to1`, illustrating the reduction from 56/168 errors to 4/168 errors on multi-word two-line calligraphy images.
 
-Final compound checkpoint (full registry in Appendix D):
-
-```text
-experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors
-```
+Final compound checkpoint (relative path; full registry in Appendix D): `experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors`.
 
 Remaining errors on Eval28 are concentrated in visually close Vietnamese diacritic or vowel variants (Table 3.7).
 
