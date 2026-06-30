@@ -305,7 +305,7 @@ Fine-tuning and layout create the second hurdle. Attention-only LoRA reaches 32�
 
 ### 1.4.1. GAN-Based Methods
 
-GANs train a generator and discriminator adversarially [1]. For Chinese calligraphy, GAN-based methods have been developed to convert printed glyphs into calligraphic style or to perform few-shot style transfer [2, 29, 30]. Mode collapse remains a known risk, and covering all Vietnamese diacritic combinations is difficult with this architecture.
+GANs train a generator and discriminator adversarially [1]. For Chinese calligraphy, GAN-based methods have been developed to convert printed glyphs into calligraphic style or to perform few-shot style transfer [2, 3, 29, 30]. Mode collapse is a known failure mode, and StrokeGAN [3] specifically addresses it for Chinese font generation through stroke encoding. Covering all Vietnamese diacritic combinations is still difficult with these architectures.
 
 ### 1.4.2. Diffusion Models
 
@@ -313,7 +313,7 @@ Diffusion models generate images through iterative denoising [4, 5], more stable
 
 ### 1.4.3. Diffusion Transformers and Multimodal Text Encoders
 
-Diffusion Transformers swap the U-Net for transformer blocks in the denoising network [7]. Transformers make it easier to mix text tokens and image tokens, but accurate text rendering is still hard because the model has to convert symbolic signals into spatial geometry [10], [24–26]. For Vietnamese, the signals that matter are often tiny yet linguistically decisive.
+Diffusion Transformers swap the U-Net for transformer blocks in the denoising network [7]. Transformers make it easier to mix text tokens and image tokens, but accurate text rendering is still hard because the model has to convert symbolic signals into spatial geometry [10], [24–26]. Specific text-accuracy-focused methods such as GlyphControl [25] and Glyph-ByT5 [26] have addressed this by injecting glyph-level conditioning, but the underlying difficulty of mapping abstract language symbols to spatially coherent character geometry remains. For Vietnamese, the signals that matter are often tiny yet linguistically decisive.
 
 Several recent models pair DiT with powerful text encoders [15], [17], [21–22]. Three open-source approaches were tested, revealing clearly different architectural choices:
 
@@ -776,7 +776,7 @@ Looking back, this work builds an empirical Ideogram4 fine-tuning pipeline for V
 
 [2] S.-J. Wu, C.-Y. Yang, and J. Hsu, "CalliGAN: Style and structure-aware Chinese calligraphy character generator," in *Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. Workshops (CVPRW)*, Seattle, WA, USA, Jun. 2020, pp. 494–495.
 
-[3] J.-Y. Zhu, T. Park, P. Isola, and A. A. Efros, "Unpaired image-to-image translation using cycle-consistent adversarial networks," in *Proc. IEEE Int. Conf. Comput. Vis. (ICCV)*, Venice, Italy, Oct. 2017, pp. 2242–2251.
+[3] J. Zeng, Q. Chen, Y. Liu, M. Wang, and Y. Yao, "StrokeGAN: Reducing mode collapse in Chinese font generation via stroke encoding," in *Proc. 35th AAAI Conf. Artif. Intell.*, vol. 35, no. 4, pp. 3275–3283, May 2021.
 
 [4] J. Ho, A. Jain, and P. Abbeel, "Denoising diffusion probabilistic models," in *Proc. 34th Int. Conf. Neural Inf. Process. Syst. (NeurIPS)*, Vancouver, BC, Canada, Dec. 2020, pp. 6840–6851.
 
