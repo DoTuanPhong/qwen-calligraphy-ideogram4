@@ -1,3 +1,25 @@
+---
+title: "Fine-tuning Qwen Image for Generating Vietnamese Calligraphy Images with Accurate Diacritics"
+author: "Đỗ Tuấn Phong"
+date: "June 2026"
+abstract: |
+  Vietnamese calligraphy (Quốc ngữ thư pháp) is a unique artistic
+  tradition that combines Latin-based orthography with dense
+  tone-mark diacritics. Modern text-to-image models can produce
+  aesthetically rich calligraphy but routinely fail on Vietnamese
+  tone-mark accuracy. This thesis investigates an open-source
+  Ideogram4 DiT-LoRA pipeline that targets Vietnamese diacritic
+  accuracy as its primary evaluation metric. A key contribution
+  is the wide-target LoRA injection (6 modules: attention.qkv,
+  attention.o, feed_forward.w1/w2/w3, adaln_modulation), diagnostic
+  probes on the Qwen3-VL text encoder, checkpoint averaging for
+  variance reduction, and direct training on a compound
+  multi-word dataset covering 406/406 Vietnamese diacritical
+  token IDs. On the Eval28 compound panel (28 images, 168 words),
+  the pipeline reduces errors from 56/168 to 4/168 (97.6% word-level
+  accuracy) within the Thu Phap Thanh Cong Unicode evaluation panel.
+---
+
 MINISTRY OF EDUCATION AND TRAINING
 
 FPT UNIVERSITY
@@ -32,7 +54,7 @@ FPT University
 
 ---
 
-## Abstract
+## Abstract {-}
 
 Quốc ngữ calligraphy renders the Latin-based Vietnamese script through calligraphic brushwork. Tone marks and vowel diacritics are linguistically mandatory, so a visually appealing image can still fail semantically if the model renders `Cữu` as `Cưu` or `Chưởng` as `Chưỡng`. Modern text-to-image models struggle with this because Vietnamese relies on small yet semantically decisive marks that must integrate with brushstroke geometry.
 
@@ -44,7 +66,7 @@ Attention-only LoRA plateaued at 32–39/60. The wide-target configuration broke
 
 ---
 
-## Acknowledgements
+## Acknowledgements {-}
 
 I would like to express my deepest gratitude to Dr. Nguyễn Bích Thủy, my supervisor, for her guidance, feedback, and patience throughout the research process. The problem in this thesis changed many times: from initial Qwen-Image experiments, to ERNIE Image, then to Ideogram4, from checking individual Vietnamese diacritic errors to diagnosing conditioning signal and finally training on multi-word layouts. Her feedback helped the research maintain a clear direction when experimental results were noisy and when several appealing hypotheses had to be discarded based on evidence.
 
@@ -56,7 +78,11 @@ Finally, I thank my family and friends for their encouragement and patience. Man
 
 ---
 
-# Table of Contents
+# Table of Contents {-}
+
+::: {#toc}
+:::
+\newpage
 
 Acknowledgements
 
@@ -138,7 +164,7 @@ Appendices
 
 ---
 
-# List of Tables
+# List of Tables {-}
 
 **Table 1.1:** Comparison of competitors and baselines for Vietnamese calligraphy image generation
 
@@ -162,7 +188,7 @@ Appendices
 
 ---
 
-# List of Figures
+# List of Figures {-}
 
 **Figure 1.1:** Overall research pipeline for Vietnamese calligraphy image generation
 Expected filename: `docs/thesis/figures/fig_1_1_research_pipeline.png`
@@ -205,7 +231,7 @@ Expected filename: `docs/thesis/figures/fig_3_8_calligraphy_with_base_model_capa
 
 ---
 
-# List of Appendices
+# List of Appendices {-}
 
 **Appendix A:** Main wide-target training command
 
