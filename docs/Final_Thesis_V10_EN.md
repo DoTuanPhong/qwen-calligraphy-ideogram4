@@ -305,11 +305,11 @@ Fine-tuning and layout create the second hurdle. Attention-only LoRA reaches 32â
 
 ### 1.4.1. GAN-Based Methods
 
-GANs train a generator and discriminator adversarially [1]. For Chinese calligraphy, GAN-based methods have been developed to convert printed glyphs into calligraphic style or to perform few-shot style transfer [2, 3, 29, 30]. Mode collapse is a known failure mode, and StrokeGAN [3] specifically addresses it for Chinese font generation through stroke encoding. Covering all Vietnamese diacritic combinations is still difficult with these architectures.
+GANs train a generator and discriminator adversarially [1]. For Chinese calligraphy, GAN-based methods have been developed to convert printed glyphs into calligraphic style or to perform few-shot style transfer [2, 3, 30]. Mode collapse is a known failure mode, and StrokeGAN [3] specifically addresses it for Chinese font generation through stroke encoding. Covering all Vietnamese diacritic combinations is still difficult with these architectures.
 
 ### 1.4.2. Diffusion Models
 
-Diffusion models generate images through iterative denoising [4, 5], more stable than GANs and capable of producing more diverse outputs. Latent Diffusion cuts computation by denoising in latent space rather than pixel space, which made high-resolution generation practical [6].
+Diffusion models generate images through iterative denoising [4, 5], more stable than GANs and capable of producing more diverse outputs. Latent Diffusion cuts computation by denoising in latent space rather than pixel space, which made high-resolution generation practical [6]. These methods have also been adapted for Chinese calligraphy generation and style transfer (e.g., Calliffusion [29]).
 
 ### 1.4.3. Diffusion Transformers and Multimodal Text Encoders
 
