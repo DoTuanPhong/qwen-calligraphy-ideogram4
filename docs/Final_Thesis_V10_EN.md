@@ -468,7 +468,7 @@ The compound set consists of 4/5/7/8-word images split into two center-aligned l
 406/406 Vietnamese diacritical token IDs covered
 ```
 
-The compound set was designed after observing that the model generates multi-word text better when trained directly on multi-word examples. This was a turning point: instead of optimizing single words and hoping for automatic generalization to sentences, multi-word layouts were brought into the training distribution.
+The compound set was designed after observing that the model generates multi-word text better when trained directly on multi-word examples. As a result, multi-word layouts were brought into the training distribution instead of optimizing single words and hoping for automatic generalization to sentences.
 
 ### 3.2.4. Bounding-Box-Free Prompts
 
@@ -705,7 +705,7 @@ The compound error reduction from 56/168 to 4/168 shows the pipeline can produce
 
 The improvement trajectory was clearer than expected. Attention-only LoRA stalled at 32–39/60; individual attention modules alone cannot fix the Vietnamese diacritic bottleneck. When the LoRA target was expanded to more DiT modules, the best single checkpoint climbed to 48/60. Averaging compatible checkpoints then produced `soup567` at 52/60.
 
-The harder lesson: single-word performance does not automatically transfer to multi-word images. The single-word gold checkpoint still produced many errors on two-line layouts. After compound bridge training, a follow-up at learning rate `3e-5`, and a light 90/10 soup with the Gold4 milestone, errors on Eval28 dropped from 56/168 to 4/168. The remaining errors cluster in a few difficult diacritic pairs, no longer a global collapse.
+The next important result is that single-word performance does not automatically transfer to multi-word images. The single-word gold checkpoint still produced many errors when writing two-line layouts. After compound bridge training, a follow-up at learning rate `3e-5`, and a light 90/10 soup with the Gold4 milestone, errors on Eval28 dropped from 56/168 to 4/168. The remaining errors cluster in a few difficult diacritic pairs, no longer a global collapse.
 
 ## 4.3. Current Limitations
 
