@@ -1,6 +1,6 @@
 # Fine-tuning Ideogram4 for Vietnamese Calligraphy Text Rendering
 
-This repository contains the restructured, official codebase and Master's thesis documentation for the **Vietnamese Calligraphy Generation** project. 
+This repository contains the official restructured codebase and Master's thesis documentation for the **Vietnamese Calligraphy Generation** project. 
 
 Our pipeline implements a surgical Parameter-Efficient Fine-Tuning (PEFT) strategy on top of **Ideogram4 (9.3B)** to resolve the Vietnamese diacritic plateau and enable high-fidelity text rendering of compound (multi-word) calligraphy layouts.
 
