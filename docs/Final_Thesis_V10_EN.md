@@ -237,7 +237,7 @@ Quốc ngữ calligraphy renders the Latin-based Vietnamese script through calli
 
 Calligraphy makes this harder. Marks must be orthographically correct and also integrate into the brushwork: maintaining rhythm, stroke thickness variation, slant, and the handcrafted feel. A nặng dot should not look like a random ink blot; a ngã tilde should not collapse into a hỏi hook; circumflex and tone marks need correct positioning while still feeling natural within the stroke layout.
 
-Recent text-to-image systems increasingly rely on large multimodal encoders and Diffusion Transformer architectures [15], [17], [21–22]. Commercial models can produce appealing calligraphy but do not allow fine-tuning on a specific font, do not guarantee reproducibility, and offer no control over individual Vietnamese diacritics. On the other end, rendering directly from a digital font gives perfect orthography but no brushstroke liveliness: no ink variation, dryness, pressure modulation, or natural stroke interaction. The research gap lies between these two extremes: learning a specific calligraphic style while keeping Vietnamese diacritics accurate.
+Recent text-to-image systems increasingly rely on large multimodal encoders and Diffusion Transformer architectures [15], [17], [21–22]. Commercial models can produce appealing calligraphy but do not allow fine-tuning on a specific font, do not guarantee reproducibility, and offer no control over individual Vietnamese diacritics. On the other end, rendering directly from a digital font gives perfect orthography but no brushstroke liveliness: no ink variation, dryness, pressure modulation, or natural stroke interaction. The detailed literature review is in Section 1.4; the consolidated research gap with the quantitative comparison to prior work is in Section 1.4.5.
 
 I originally registered this topic under the Qwen Image direction. During early experiments, Qwen Image turned out to be impractical: too much VRAM for rapid iteration, and too weak on Vietnamese at baseline (character-level errors before tone-mark problems could even be isolated). ERNIE Image did better at preserving character counts but stumbled on its own tokenizer, where Mistral3/Ministral3 byte-level BPE broke syllable-level diacritic alignment, especially for capitalized forms like `Ở`, `Ảnh`, `Ước`. These observations are documented as internal experimental evidence in Appendix J; the model families themselves appear in [17, 21].
 
@@ -247,17 +247,23 @@ I moved to Ideogram4 because its published technical description reports strong 
 
 ### 1.2.1. Research Objective Evolution
 
-The thesis research objective evolved through three documented phases, all aligned with the registered title "Fine-tuning Qwen Image for Generating Vietnamese Calligraphy Images with Accurate Diacritics." The evolution is summarized below; Section 1.1 provides the experimental evidence for each transition.
+To avoid any impression that the thesis changed topic, this section states the research objective at two milestones — as initially registered and as adjusted for the final implementation — together with the invariant that holds across both. The evolution is best read as an evidence-driven narrowing of *method*, not a change of *research question*.
 
-**Phase 1 (registered direction, baseline plan).** The initial objective was to fine-tune Qwen Image, the most recent DiT model in the Qwen family at the time of registration, on a Vietnamese calligraphy dataset to improve diacritic rendering accuracy. The registered title reflects this baseline plan.
+**Initial research objective (as registered).** Fine-tune Qwen Image with LoRA to generate Vietnamese Quốc-ngữ calligraphy with accurate tone marks and diacritics, on a specific calligraphy font and through a reproducible pipeline.
 
-**Phase 2 (text encoder investigation, diagnostic question).** After Qwen Image was found impractical for local training (Section 1.1, paragraphs on VRAM and Vietnamese baseline), the research direction shifted to investigating the underlying Qwen-family text encoder signal. The question became more specific: where does the linguistic signal bottleneck originate, in the text encoder or in the image-generation backbone? This diagnostic question is the actual research contribution and remains valid regardless of which image-generation backbone is used.
+**Adjusted research objective (final implementation).** Build an Ideogram4 DiT-LoRA pipeline for the *same* end goal — accurate-diacritic Vietnamese calligraphy generation — after empirical evidence showed Qwen Image was not a suitable backbone for local iteration.
 
-**Phase 3 (Ideogram4 implementation, current scope).** Ideogram4 was selected as the implementation backbone because it uses a Qwen3-VL text encoder (the same family as Qwen Image) and has a stronger text-rendering foundation. This makes Ideogram4 a natural fit for the Phase 2 diagnostic question: it lets the same research question be answered with a model that is workable in the available compute environment.
+**Invariant.** The research objective — *Vietnamese diacritic accuracy in calligraphy via parameter-efficient fine-tuning (PEFT) of a modern text-to-image model* — does not change across milestones. What changed is the experimental **backbone (the means)**, re-selected on evidence, not the **research question (the end)**. The backbone decision is summarized below:
 
-**Common thread across all three phases.** The Qwen-family text encoder remains the linguistic conditioning source in every phase, and Vietnamese diacritic accuracy remains the evaluation target. The implementation backbone changes from Qwen Image (Phase 1) to Ideogram4 (Phase 3), but the research question about Qwen-family conditioning for Vietnamese diacritics does not change.
+| Milestone | Backbone | Status and reason |
+|---|---|---|
+| Initial (registered) | Qwen Image | Dropped — VRAM too high for local iteration; weak Vietnamese baseline (character-level errors before tone marks could even be isolated) |
+| Intermediate (surveyed) | ERNIE Image | Dropped — residual character errors; byte-level BPE (Mistral3/Ministral3) hampers syllable-level diacritic alignment, especially for capitalized forms |
+| Final (implemented) | Ideogram4 | Selected — strongest text-rendering foundation among surveyed open models; FP8 base + BF16 LoRA feasible for local fine-tuning |
 
-The phase transitions in this evolution were driven by experimental evidence (Section 1.1), not by drift or convenience. The remaining sections of this thesis report the Phase 3 implementation, which is the only phase that produced a reproducible checkpoint.
+On the perception of "three different objectives": the apparent phases are (1) fine-tune Qwen Image, (2) investigate the Qwen-family text encoder, and (3) Ideogram4 LoRA. Phase (2) is **not a separate topic** but a *diagnostic sub-question* inside the same objective — *does the Qwen-family text encoder carry the Vietnamese diacritic signal, and is the bottleneck the encoder or the DiT's glyph binding?* This question is **backbone-independent**, because both Qwen Image (Qwen2.5-VL encoder) and Ideogram4 (Qwen3-VL encoder) rely on a Qwen-family encoder; the encoder analysis therefore transfers directly to the final backbone. Phases (1) and (3) are thus two *implementations* of one objective, not two topics.
+
+For consistency with references used elsewhere in the thesis, these milestones map to three phases, all aligned with the registered title: **Phase 1** — the registered Qwen Image plan (the *initial objective* above); **Phase 2** — the Qwen-family text-encoder diagnostic sub-question, which is the actual research contribution; **Phase 3** — the Ideogram4 implementation (the *adjusted objective*), the only phase that produced a reproducible checkpoint. All transitions were driven by experimental evidence (Section 1.1), not by drift or convenience.
 
 ### 1.2.2. Scope Change from Qwen-Image to Ideogram4
 
@@ -329,11 +335,27 @@ One finding worth flagging: LoRA target module selection matters more than one m
 
 ### 1.4.5. Commercial Models and Research Gap
 
-Commercial models produce beautiful calligraphy but give up control: no access to font, private data, checkpoints, seeds, or evaluation pipelines. Nano Banana 2 and GPT Image 1.5 High were used as visual comparison baselines in earlier thesis drafts: they generate appealing Vietnamese calligraphy but operate as black boxes with default styles and no fine-tuning mechanism. Useful for comparison, not for a reproducible pipeline.
+**Existing works in adjacent areas.** Several adjacent research areas have explored calligraphy generation or Vietnamese text rendering, but none combine fine-tuning with Vietnamese diacritic accuracy targets:
 
-Digital font rendering sits at the opposite extreme. Characters come out orthographically perfect since they are rendered straight from the font file. But the images are static: no ink variation, pressure modulation, dry-brush effect, or organic stroke interaction. Perfect text accuracy, zero calligraphic naturalness.
+- **Chinese calligraphy generation** uses GAN-based and diffusion-based methods [2, 3, 4, 6] but targets a logographic script without tone marks; diacritic accuracy is not a defined metric. The reported metrics focus on visual similarity (SSIM, FID) and character-class recognition, not on tone-mark-level orthographic correctness.
 
-The open-weight models tested each have their own failure mode, as discussed in Section 1.4.3. Base Ideogram4 is the strongest starting point found, but it still confuses difficult Vietnamese diacritics and handles multi-word layouts poorly on its own.
+- **Open-source text-to-image models** (Qwen-Image [21], ERNIE-Image [17], Ideogram4 [15]) report strong general text-rendering performance but only in their default languages (Chinese, English, general). Their published technical descriptions do not report Vietnamese diacritic rendering accuracy on stylized calligraphy, and the available models do not ship fine-tuning recipes for Vietnamese fonts.
+
+- **Digital font rendering** (e.g. fontforge, CSS `@font-face`) gives perfect orthography but no calligraphic variation. It is not a learned system and does not address the brushwork dynamics that calligraphy requires.
+
+- **Black-box commercial tools** (Nano Banana 2, GPT Image 1.5 High, Ideogram online) generate appealing Vietnamese calligraphy imagery but operate as closed systems: no published checkpoint, no reproducible seed control, no fine-tuning on private data. The output style cannot be adapted to a specific calligraphy font or school.
+
+- **Evaluation methodology for stylized text** remains open. OCR engines such as Vintern-3B-R-beta achieve only 16.27% CER on model-generated Vietnamese calligraphy images (Section 13.7 of `eval_baseline_results_4w.md`), so most prior works cannot report reliable automated metrics and instead rely on qualitative samples.
+
+**However, the following gap remains.** Across the existing landscape, no prior work has demonstrated a *reproducible, open-source fine-tuning pipeline that reports quantitative Vietnamese diacritic-accuracy numbers on stylized calligraphy* at the level achievable by this thesis (97.6% word-level accuracy, 4 errors out of 168 words on the Eval28 compound panel, Section 3.6.4). The closest published numbers are either:
+- (a) qualitative visual comparisons without diacritic-accuracy metrics (most open-source text-to-image reports), or
+- (b) digital-font rendering accuracies of ~100% but without any learned calligraphic dynamics, or
+- (c) Chinese-logographic calligraphy accuracies that do not transfer to Vietnamese tone-mark evaluation.
+
+**Therefore, this thesis fills a concrete, measurable gap.** It builds an open-source Ideogram4 DiT-LoRA pipeline that:
+- targets Vietnamese diacritic accuracy as the primary, *quantified* evaluation metric (97.6% word-level on the Eval28 panel, Section 3.6.4);
+- ships a reproducible checkpoint, training script, dataset, and evaluation panel (HF + GitHub, links in Abstract);
+- documents an evidence-driven pipeline for one font (Thu Phap Thanh Cong Unicode) that other researchers can adapt to additional fonts and other languages with stacked diacritics (e.g. tonal languages in the same family).
 
 Table 1.1 summarizes the competitive landscape.
 
@@ -346,9 +368,10 @@ Table 1.1 summarizes the competitive landscape.
 | Qwen Image | Powerful model family; initial registered direction | VRAM-intensive; weak Vietnamese baseline |
 | ERNIE Image | Better character count preservation; occasional correct phrases | Character errors; byte-level BPE breaks syllable/diacritic alignment |
 | Base Ideogram4 | Best open text-rendering foundation among tested approaches | Errors on difficult diacritics; poor multi-word layouts |
+| Existing Chinese-calligraphy work (e.g. [2], [3], [4]) | Mature pipelines for logographic scripts | No tone-mark evaluation metric; no Vietnamese diacritic accuracy reported |
 | Proposed DiT-LoRA pipeline | Learns specific font, reproducible, improves single-word and compound | Limited to one primary font and manual evaluation panel |
 
-The gap addressed: a reproducible fine-tuning pipeline that learns a specific font style and keeps Vietnamese diacritics accurate across both single-word and multi-word layouts.
+**Gap closed by this work:** the first reproducible, open-source, diacritic-accuracy-quantified pipeline for Vietnamese calligraphy image generation, with end-to-end artifacts (checkpoint + training script + dataset + evaluation panel) released for replication.
 
 ![Figure 1.2. Visual comparison of competitor methods and the proposed checkpoint.](figures/fig_1_2_competitor_baseline_comparison.png)
 
