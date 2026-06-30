@@ -337,7 +337,7 @@ One finding worth flagging: LoRA target module selection matters more than one m
 
 **Existing works in adjacent areas.** Several adjacent research areas have explored calligraphy generation or Vietnamese text rendering, but none combine fine-tuning with Vietnamese diacritic accuracy targets:
 
-- **Chinese calligraphy generation** uses GAN-based and diffusion-based methods [2, 3, 4, 6] but targets a logographic script without tone marks; diacritic accuracy is not a defined metric. The reported metrics focus on visual similarity (SSIM, FID) and character-class recognition, not on tone-mark-level orthographic correctness.
+- **Chinese calligraphy generation** uses GAN-based and diffusion-based methods (e.g. CalliGAN [2]) but targets a logographic script without tone marks; diacritic accuracy is not a defined metric. The reported metrics focus on visual similarity (SSIM [23], FID) and character-class recognition, not on tone-mark-level orthographic correctness.
 
 - **Open-source text-to-image models** (Qwen-Image [21], ERNIE-Image [17], Ideogram4 [15]) report strong general text-rendering performance but only in their default languages (Chinese, English, general). Their published technical descriptions do not report Vietnamese diacritic rendering accuracy on stylized calligraphy, and the available models do not ship fine-tuning recipes for Vietnamese fonts.
 
@@ -368,7 +368,7 @@ Table 1.1 summarizes the competitive landscape.
 | Qwen Image | Powerful model family; initial registered direction | VRAM-intensive; weak Vietnamese baseline |
 | ERNIE Image | Better character count preservation; occasional correct phrases | Character errors; byte-level BPE breaks syllable/diacritic alignment |
 | Base Ideogram4 | Best open text-rendering foundation among tested approaches | Errors on difficult diacritics; poor multi-word layouts |
-| Existing Chinese-calligraphy work (e.g. [2], [3], [4]) | Mature pipelines for logographic scripts | No tone-mark evaluation metric; no Vietnamese diacritic accuracy reported |
+| Existing Chinese-calligraphy work (e.g. [2]) | Mature pipelines for logographic scripts | No tone-mark evaluation metric; no Vietnamese diacritic accuracy reported |
 | Proposed DiT-LoRA pipeline | Learns specific font, reproducible, improves single-word and compound | Limited to one primary font and manual evaluation panel |
 
 **Gap closed by this work:** the first reproducible, open-source, diacritic-accuracy-quantified pipeline for Vietnamese calligraphy image generation, with end-to-end artifacts (checkpoint + training script + dataset + evaluation panel) released for replication.
