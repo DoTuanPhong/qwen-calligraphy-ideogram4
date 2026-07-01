@@ -1,0 +1,100 @@
+{
+  "run": "scene_slant_probe_test28_seed7000",
+  "date": "2026-07-01",
+  "checkpoint": "experiments/checkpoints/coverage_v10_compound_soup_lr3e5_gold4_9to1/step-soup_infer.safetensors",
+  "seed": 7000,
+  "total_words": 168,
+  "wrong_words": 10,
+  "correct_words": 158,
+  "word_accuracy": 0.9404761904761905,
+  "audit_source": "user manual scoring",
+  "notes": [
+    "Scene/material/panel pose rendered correctly according to user audit.",
+    "Slant means the paper panel is propped/tilted/rotated in perspective, not italic letters.",
+    "Errors below are glyph/diacritic binding misses under scene/material/perspective stress."
+  ],
+  "errors": [
+    {
+      "index": 1,
+      "image": "01_gallery_hon_lean_back_gold_on_red_lacquer_s7000.jpg",
+      "slant": "lean_back",
+      "material": "gold_on_red_lacquer",
+      "expected": "Nồng",
+      "rendered": "Nông"
+    },
+    {
+      "index": 2,
+      "image": "02_tea_nu_lean_back_black_on_cream_s7000.jpg",
+      "slant": "lean_back",
+      "material": "black_on_cream",
+      "expected": "Rủa",
+      "rendered": "Rửa"
+    },
+    {
+      "index": 3,
+      "image": "03_lantern_ghe_lean_back_black_on_yellow_silk_s7000.jpg",
+      "slant": "lean_back",
+      "material": "black_on_yellow_silk",
+      "expected": "Tài",
+      "rendered": "Tâi"
+    },
+    {
+      "index": 12,
+      "image": "12_village_market_tilt_right_black_on_cream_s7000.jpg",
+      "slant": "tilt_right",
+      "material": "black_on_cream",
+      "expected": "Quẻ",
+      "rendered": "Quẻ + extra ngã mark",
+      "note": "User phrasing: Quẻ thừa ngã."
+    },
+    {
+      "index": 13,
+      "image": "13_riverside_cafe_tilt_right_ink_on_celadon_s7000.jpg",
+      "slant": "tilt_right",
+      "material": "ink_on_celadon",
+      "expected": "Bề",
+      "rendered": "Bể"
+    },
+    {
+      "index": 13,
+      "image": "13_riverside_cafe_tilt_right_ink_on_celadon_s7000.jpg",
+      "slant": "tilt_right",
+      "material": "ink_on_celadon",
+      "expected": "Pây",
+      "rendered": "Pày"
+    },
+    {
+      "index": 17,
+      "image": "17_altar_table_prop_diag_black_on_yellow_silk_s7000.jpg",
+      "slant": "prop_diag",
+      "material": "black_on_yellow_silk",
+      "expected": "Giụa",
+      "rendered": "Giựa"
+    },
+    {
+      "index": 18,
+      "image": "18_artist_studio_prop_diag_black_on_cream_s7000.jpg",
+      "slant": "prop_diag",
+      "material": "black_on_cream",
+      "expected": "Xỉa",
+      "rendered": "Xĩa"
+    },
+    {
+      "index": 20,
+      "image": "20_chalkboard_prop_diag_black_on_cream_s7000.jpg",
+      "slant": "prop_diag",
+      "material": "black_on_cream",
+      "expected": "Nữ",
+      "rendered": "Nử"
+    },
+    {
+      "index": 21,
+      "image": "21_zen_garden_prop_diag_vermilion_on_cream_s7000.jpg",
+      "slant": "prop_diag",
+      "material": "vermilion_on_cream",
+      "expected": "Ghẹ",
+      "rendered": "Ghệ",
+      "note": "User listed the Ghệ/Ghẹ confusion; the target phrase in render_log is Ghẹ."
+    }
+  ]
+}
