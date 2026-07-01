@@ -24,7 +24,6 @@ Testing calligraphy text rendering combined with full holiday still-life backgro
 
 All supplementary documents, diagnostic reports, and error audits referenced in the main thesis are included under the `docs/` and `experiments/` directories:
 - **Master's Thesis:** [English Version](docs/Final_Thesis_V10_EN.md) | [Vietnamese Version](docs/Final_Thesis_V10_VI.md)
-- **Pilot Phase 0 Analysis:** [Older_Thesis_V10_EN.md](docs/Older_Thesis_V10_EN.md) (validation details of pilot Ideogram4 run)
 - **Tokenizer Investigation Reports:** 
   - [ERNIE Image Tokenization Report](docs/ernie_image_tokenization_report.vi.md) (Mistral3 byte-level BPE tokenizer issues)
   - [Qwen3-VL Tokenizer Robustness Report](docs/v10_tokenizer_robustness_report.vi.md) (detailed analysis of Vietnamese diacritical characters)
@@ -35,7 +34,6 @@ All supplementary documents, diagnostic reports, and error audits referenced in 
   - [Baseline Results (4-Word)](docs/eval_baseline_results_4w.md) (details on the 16.27% CER baseline measurement using Vintern-3B-R-beta)
   - [Baseline Framework Specifications](docs/eval_baseline_framework_4w.md)
 - **Manual Stress Probe Logs:** [manual_error_summary_20260701.json](experiments/results/coverage_v10_eval/scene_slant_probe_test28_seed7000/manual_error_summary_20260701.json) (manual word-level scoring for the Test28 stress probe)
-- **Code & Setup Guides:** [CLAUDE_SYNC_GUIDE.md](docs/CLAUDE_SYNC_GUIDE.md) | [guide_instance_migration_v10.md](docs/guide_instance_migration_v10.md)
 
 ---
 
@@ -57,8 +55,8 @@ The repository is organized as a clean, modular Python codebase alongside active
 │   │   ├── loader.py         # Custom dataset loader for Ideogram4 training
 │   │   └── builder.py        # Greedy set-cover compound dataset generator
 │   └── pipeline/             
-│       ├── train.py          # Cosine-annealed training loop for FP8 base + BF16 LoRA
-│       └── infer.py          # Unified inference script for calligraphy text generation
+│   │   ├── train.py          # Cosine-annealed training loop for FP8 base + BF16 LoRA
+│   │   └── infer.py          # Unified inference script for calligraphy text generation
 ├── scripts/                  
 │   ├── soup_checkpoints.py   # Checkpoint averaging and rsLoRA conversion script
 │   └── evaluate.py           # Batch evaluation runner on custom prompt panels
@@ -72,9 +70,6 @@ The repository is organized as a clean, modular Python codebase alongside active
 └── docs/                     
     ├── Final_Thesis_V10_EN.md # Master Thesis (English Version)
     ├── Final_Thesis_V10_VI.md # Master Thesis (Vietnamese Version)
-    ├── Older_Thesis_V10_EN.md # Phase 0 pilot validation thesis version
-    ├── CLAUDE_SYNC_GUIDE.md  # Git-based history sync guide
-    ├── guide_instance_migration_v10.md # Checkpoint migration/instance guide
     ├── ernie_image_tokenization_report.vi.md # ERNIE tokenizer analysis
     ├── v10_tokenizer_robustness_report.vi.md # Qwen tokenizer analysis
     ├── eval_baseline_results_4w.md # Baseline diacritic-accuracy report
