@@ -20,11 +20,28 @@ Comparison between the base Ideogram4 model and our final compound souped checkp
 Testing calligraphy text rendering combined with full holiday still-life backgrounds (Tet holiday theme):
 ![Calligraphy in Tet holiday scenes](docs/figures/fig_3_8_calligraphy_with_base_model_capability.png)
 
+## Thesis Documentation & Supplementary Reports
+
+All supplementary documents, diagnostic reports, and error audits referenced in the main thesis are included under the `docs/` and `experiments/` directories:
+- **Master's Thesis:** [English Version](docs/Final_Thesis_V10_EN.md) | [Vietnamese Version](docs/Final_Thesis_V10_VI.md)
+- **Pilot Phase 0 Analysis:** [Older_Thesis_V10_EN.md](docs/Older_Thesis_V10_EN.md) (validation details of pilot Ideogram4 run)
+- **Tokenizer Investigation Reports:** 
+  - [ERNIE Image Tokenization Report](docs/ernie_image_tokenization_report.vi.md) (Mistral3 byte-level BPE tokenizer issues)
+  - [Qwen3-VL Tokenizer Robustness Report](docs/v10_tokenizer_robustness_report.vi.md) (detailed analysis of Vietnamese diacritical characters)
+- **Qwen3-VL Signal & Family Probes:**
+  - [Signal Probe Report](docs/probe_reports/_QWEN3_VL_SIGNAL_PROBE_2026-06-23.md) (tap space diagnostic probe)
+  - [Cuu Family Probe Report](docs/probe_reports/_QWEN3_VL_CUU_FAMILY_PROBE_2026-06-24.md) (tone/vowel binding diagnostic probe)
+- **Evaluation Baseline Reports:**
+  - [Baseline Results (4-Word)](docs/eval_baseline_results_4w.md) (details on the 16.27% CER baseline measurement using Vintern-3B-R-beta)
+  - [Baseline Framework Specifications](docs/eval_baseline_framework_4w.md)
+- **Manual Stress Probe Logs:** [manual_error_summary_20260701.json](experiments/results/coverage_v10_eval/scene_slant_probe_test28_seed7000/manual_error_summary_20260701.json) (manual word-level scoring for the Test28 stress probe)
+- **Code & Setup Guides:** [CLAUDE_SYNC_GUIDE.md](docs/CLAUDE_SYNC_GUIDE.md) | [guide_instance_migration_v10.md](docs/guide_instance_migration_v10.md)
+
 ---
 
 ## Directory Structure
 
-The repository is organized as a clean, modular Python codebase:
+The repository is organized as a clean, modular Python codebase alongside active research reports:
 
 ```text
 ├── README.md                 # Project introduction, setup, and usage guides
@@ -45,6 +62,9 @@ The repository is organized as a clean, modular Python codebase:
 ├── scripts/                  
 │   ├── soup_checkpoints.py   # Checkpoint averaging and rsLoRA conversion script
 │   └── evaluate.py           # Batch evaluation runner on custom prompt panels
+├── experiments/              # Experiment logs and scripts (from thesis)
+│   ├── scripts/v10/          # Specific v10 data/training scripts
+│   └── results/              # Target evaluation error logs (json)
 ├── assets/                   
 │   ├── fonts/                # Target calligraphy font directory
 │   ├── vietnamesesyllable_7184.txt # Vietnamese syllable lexicon list
@@ -52,6 +72,14 @@ The repository is organized as a clean, modular Python codebase:
 └── docs/                     
     ├── Final_Thesis_V10_EN.md # Master Thesis (English Version)
     ├── Final_Thesis_V10_VI.md # Master Thesis (Vietnamese Version)
+    ├── Older_Thesis_V10_EN.md # Phase 0 pilot validation thesis version
+    ├── CLAUDE_SYNC_GUIDE.md  # Git-based history sync guide
+    ├── guide_instance_migration_v10.md # Checkpoint migration/instance guide
+    ├── ernie_image_tokenization_report.vi.md # ERNIE tokenizer analysis
+    ├── v10_tokenizer_robustness_report.vi.md # Qwen tokenizer analysis
+    ├── eval_baseline_results_4w.md # Baseline diacritic-accuracy report
+    ├── eval_baseline_framework_4w.md # Evaluation framework specs
+    ├── probe_reports/        # Qwen3-VL tap & projection probe reports
     └── figures/              # Embedded research diagrams and result crops
 ```
 
