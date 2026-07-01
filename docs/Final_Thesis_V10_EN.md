@@ -44,7 +44,7 @@ Quốc ngữ calligraphy renders the Latin-based Vietnamese script through calli
 
 The study was initially registered under Qwen Image; however, the final implementation uses Ideogram4 after two earlier candidates were not selected for the experimental setting. Qwen Image exceeded the local VRAM budget and produced Vietnamese character errors. ERNIE Image preserved character counts more often in some examples, but its tokenizer was unstable on capitalized Vietnamese syllables. Because Ideogram4 uses Qwen3-VL-8B-Instruct as its text encoder, the study retained the diagnostic question of whether Qwen-family conditioning preserves Vietnamese diacritic signal before the DiT renders glyphs. The implemented DiT-LoRA pipeline probes that signal, expands the LoRA target from attention-only to `attention.qkv`, `attention.o`, `feed_forward.w1`/`w2`/`w3`, and `adaln_modulation`, stabilizes high-variance checkpoints through averaging, and trains directly on multi-word layouts.
 
-Attention-only LoRA plateaued at 32–39/60. The wide-target configuration surpassed this plateau (48/60 for the highest-scoring single checkpoint, 52/60 after averaging). Since single-word gains did not transfer to multi-word images, a compound dataset of 4/5/7/8-word images covering all 406 Vietnamese diacritical token IDs was built. On the Eval28 panel (168 words), checkpoint averaging and a final `3e-5` follow-up reduced errors from 56/168 to 4/168 (97.6% word-level accuracy). This result is reported for the Thu Phap Thanh Cong Unicode evaluation panel; other fonts and languages were not tested.
+Attention-only LoRA plateaued at 32–39/60. The wide-target configuration surpassed this plateau (48/60 for the highest-scoring single checkpoint, 52/60 after averaging). Since single-word gains did not transfer to multi-word images, a compound dataset of 4/5/7/8-word images covering all 406 Vietnamese diacritical token IDs was built. On the validation Eval28 panel (168 words), checkpoint averaging and a final `3e-5` follow-up reduced errors from 56/168 to 4/168 (97.6% word-level accuracy). After checkpoint selection, a held-out Test28 panel of the same size was rendered once and produced 3/168 errors (98.2% word-level accuracy). These results are reported for the Thu Phap Thanh Cong Unicode evaluation setting; other fonts and languages were not tested.
 
 Keywords: Vietnamese calligraphy, Qwen Image, Ideogram4, fine-tuning, LoRA, Diffusion Transformer, Vietnamese diacritics, glyph binding.
 
@@ -208,6 +208,10 @@ Appendices
 
 **Figure 3.8:** Testing the fine-tuned checkpoint for combining calligraphy with Ideogram4's base image generation capability
 
+**Figure 3.9:** Full held-out Test28 compound panel rendered by the final checkpoint
+
+**Figure 3.10:** Scene, material, and tilted-panel stress probe on the held-out Test28 phrases
+
 ---
 
 # List of Appendices {-}
@@ -350,13 +354,13 @@ Several adjacent research areas have explored calligraphy generation or Vietname
 
 - Evaluation methodology for stylized text remains open. OCR engines such as Vintern-3B-R-beta achieve 16.27% CER on model-generated Vietnamese calligraphy images (Section 13.7 of `eval_baseline_results_4w.md`), so the surveyed prior works often rely on qualitative samples rather than automated diacritic-accuracy metrics.
 
-The survey in this thesis did not identify prior work demonstrating a reproducible, open-source fine-tuning pipeline with quantitative Vietnamese diacritic-accuracy results on stylized calligraphy at the level measured here (97.6% word-level accuracy, 4 errors out of 168 words on the Eval28 compound panel, Section 3.6.4). The closest published numbers are either:
+The survey in this thesis did not identify prior work demonstrating a reproducible, open-source fine-tuning pipeline with quantitative Vietnamese diacritic-accuracy results on stylized calligraphy at the level measured here (97.6% word-level accuracy on validation Eval28 and 98.2% on held-out Test28, Section 3.6). The closest published numbers are either:
 - (a) qualitative visual comparisons without diacritic-accuracy metrics (many surveyed open-source text-to-image reports), or
 - (b) digital-font rendering accuracies of ~100% but without any learned calligraphic dynamics, or
 - (c) Chinese-logographic calligraphy accuracies that do not transfer to Vietnamese tone-mark evaluation.
 
 Based on this survey, the implementation in this thesis is an open-source Ideogram4 DiT-LoRA pipeline that:
-- targets Vietnamese diacritic accuracy as the primary quantified evaluation metric (97.6% word-level on the Eval28 panel, Section 3.6.4);
+- targets Vietnamese diacritic accuracy as the primary quantified evaluation metric (97.6% word-level on validation Eval28 and 98.2% on held-out Test28, Section 3.6);
 - provides a reproducible checkpoint, training script, dataset, and evaluation panel through Hugging Face and GitHub;
 - documents an evidence-driven pipeline for one font (Thu Phap Thanh Cong Unicode) that can be tested as a starting point for additional fonts and other languages with stacked diacritics (e.g. tonal languages in the same family).
 
@@ -524,6 +528,12 @@ Bounding-box experiments produced insufficient layout adherence. Narrow cell-bas
 
 **Figure 3.3.** Font-rendered reference versus model-generated compound layout. The comparison shows that the font-rendered compound targets align with the model's centered two-line layout in the tested examples sufficiently to serve as supervised training data while preserving exact Vietnamese characters and diacritics.
 
+### 3.2.5. Train, Validation, and Test Roles
+
+The supervised training data consists of the rendered font datasets described above, including the compound 2808-image set and supplementary single-word examples. Fragile60 and compound Eval28 are validation and model-selection panels: they were used repeatedly to compare LoRA target sets, checkpoints, learning rates, and checkpoint-averaging ratios. Therefore, the 4/168 Eval28 result is treated as the final validation result rather than as an untouched test-set score.
+
+After the final `soup_lr3e5_gold4_9to1` checkpoint was frozen, an additional held-out Test28 panel was generated for one-time reporting. It matches the Eval28 shape (28 compound images, 168 total words, seven groups each for 4/5/7/8 words), excludes all Fragile60 and Eval28 words, and has no exact ordered or unordered group overlap with the audited compound training metadata or Eval28 groups. Since 97 of its 168 words appear somewhere in the audited training metadata, Test28 is best interpreted as a held-out phrase/group/panel evaluation rather than a fully unseen-token test; 71/168 words are unseen in the audited compound training metadata.
+
 ## 3.3. Diagnostic Probes
 
 ### 3.3.1. Qwen3-VL Signal Probe
@@ -602,15 +612,19 @@ Given the observed OCR error rate on this stylized calligraphy set (Vintern-3B-R
 
 ### 3.5.2. Single-Word Fragile Panel
 
-The fragile panel of 60 contains difficult words that commonly suffer from diacritic or character errors. It is used to track single-word progress. The base seed stays fixed to avoid seed confounding.
+The fragile panel of 60 contains difficult words that commonly suffer from diacritic or character errors. It is used as a validation panel to track single-word progress and guide checkpoint selection. The base seed stays fixed to avoid seed confounding.
 
 ### 3.5.3. Compound Eval28
 
-Compound Eval28 has 28 images, each with multiple words (168 words total). This panel more directly tests the project's target than single words because it covers layout, spacing, font size, and the ability to keep diacritics correct when multiple tokens compete in the same image. Evaluation directories for the major checkpoints are in Appendix E.
+Compound Eval28 has 28 images, each with multiple words (168 words total). This panel more directly tests the project's target than single words because it covers layout, spacing, font size, and the ability to keep diacritics correct when multiple tokens compete in the same image. Eval28 is the main validation and model-selection panel for the compound phase. Evaluation directories for the major checkpoints are in Appendix E.
 
-### 3.5.4. Testing Preservation of Base Image Generation Capability
+### 3.5.4. Held-Out Compound Test28
 
-Orthographic correctness alone is insufficient; evaluation must also assess whether LoRA degrades Ideogram4's base image-generation capabilities. The qualitative panel includes context-rich prompts with Vietnamese calligraphic text in Tết greeting-card, ink-painting, festival-banner, and poster-layout scenes. This does not replace Eval28 but provides an additional qualitative assessment: a checkpoint is preferred if it improves text while preserving comparable backgrounds, layouts, lighting, and textures in the inspection panel.
+After checkpoint selection, the final checkpoint is also evaluated on `compound_test28_heldout_seed20260630`, a held-out panel generated after the final model choice. This panel uses the same 28-image / 168-word size as Eval28, with the same 4/5/7/8-word group distribution and render seed 7000, but excludes Fragile60 and Eval28 words. The panel manifest, full-panel figure, and manual scoring file are stored under `experiments/results/coverage_v10_eval/` and `docs/thesis/figures/`.
+
+### 3.5.5. Testing Preservation of Base Image Generation Capability
+
+Orthographic correctness alone is insufficient; evaluation must also assess whether LoRA degrades Ideogram4's base image-generation capabilities. The qualitative panel includes context-rich prompts with Vietnamese calligraphic text in Tết greeting-card, ink-painting, festival-banner, and poster-layout scenes. A later stress probe reuses the held-out Test28 phrases in richer scenes with material changes and tilted paper panels; in that probe, "slant" refers to the pose of the paper or panel in perspective, not italic lettering. These panels do not replace Eval28 or held-out Test28, but provide additional qualitative assessment: a checkpoint is preferred if it improves text while preserving comparable backgrounds, layouts, lighting, materials, and textures in the inspection panel.
 
 ## 3.6. Results
 
@@ -692,6 +706,18 @@ Remaining errors on Eval28 are concentrated in visually close Vietnamese diacrit
 
 **Figure 3.8.** Testing the fine-tuned checkpoint with base image generation capability. Two Tết still-life prompts compare base Ideogram4, the single-word checkpoint soup `soup567`, and the final compound checkpoint `soup_lr3e5_gold4_9to1`. The figure checks whether Vietnamese calligraphy accuracy can improve while preserving composition, lighting, paper texture, and decorative background elements.
 
+After checkpoint selection, the frozen final checkpoint was rendered once on the held-out Test28 panel. Manual scoring found 3 errors out of 168 words, or 165/168 correct words (98.2% word-level accuracy). The three observed errors were `Hôn→Hon`, `Nữ→Nử`, and `Ghẹ→Ghệ`. This result supports the Eval28 finding while avoiding direct reuse of the validation/model-selection panel as the only reported quantitative result.
+
+![Figure 3.9. Full held-out Test28 compound panel rendered by the final checkpoint.](figures/fig_3_9_heldout_test28_full_panel.jpg)
+
+**Figure 3.9.** Full held-out Test28 compound panel rendered by the final checkpoint. The figure contains all 28 held-out compound images in row-major order, four images per row and seven rows total. Manual word-level scoring of this panel produced 3 errors out of 168 words (98.2% word-level accuracy).
+
+To test the final checkpoint under stronger visual stress, the same 28 held-out Test28 phrases were rendered in scene-rich prompts with material swaps and tilted paper-panel poses. The panel pose was intentionally slanted in perspective, while the calligraphy itself remained normal brush-script text lying flat on the panel. The images rendered the requested scenes, materials, and panel poses correctly in visual inspection, but manual word-level scoring found 10 errors out of 168 words, or 158/168 correct words (94.0% word-level accuracy). The observed errors were `Nồng→Nông`, `Rủa→Rửa`, `Tài→Tâi`, `Quẻ` with an extra ngã mark, `Bề→Bể`, `Pây→Pày`, `Giụa→Giựa`, `Xỉa→Xĩa`, `Nữ→Nử`, and `Ghẹ→Ghệ`.
+
+![Figure 3.10. Scene, material, and tilted-panel stress probe on the held-out Test28 phrases.](figures/fig_3_10_scene_slant_material_test28_full_panel.jpg)
+
+**Figure 3.10.** Scene, material, and tilted-panel stress probe on the held-out Test28 phrases. The figure contains all 28 rendered scene prompts in row-major order, four images per row and seven rows total. Compared with the clean held-out Test28 panel, this stress probe shows that rich backgrounds, non-paper materials, and angled paper panels increase diacritic-binding errors, even when the visual scene itself remains coherent.
+
 ### 3.6.4. Current Gold Checkpoints
 
 The final checkpoints identified during experimentation are summarized in Table 3.9. Full checkpoint paths and evaluation directory listings are recorded in Appendix D and Appendix E.
@@ -721,17 +747,17 @@ The experimental results also show that single-word and multi-word problems are 
 
 This study provides a reproducible technical pipeline for Vietnamese calligraphy image generation. It covers data creation from the target font, coverage checking at the tokenizer level, LoRA fine-tuning, checkpoint conversion, checkpoint averaging, evaluation rendering with fixed seeds, and manual word-level inspection. The pipeline records the main components required for reproducibility because this problem was observed to be sensitive to seeds, checkpoints, and prompt formatting.
 
-The compound error reduction from 56/168 to 4/168 shows that the pipeline can produce checkpoints with substantially fewer errors on the evaluated multi-word calligraphy panel. In addition to the quantitative result, the released artifacts can support future application-oriented studies in graphic design, personalized greeting images, digital cultural preservation, and calligraphy education.
+The compound error reduction from 56/168 to 4/168 on validation Eval28, together with 3/168 errors on the held-out Test28 panel, shows that the pipeline can produce checkpoints with substantially fewer errors on the evaluated multi-word calligraphy panels. In addition to the quantitative result, the released artifacts can support future application-oriented studies in graphic design, personalized greeting images, digital cultural preservation, and calligraphy education.
 
 ## 4.2. Summary of Key Results
 
 The measured trajectory shows consistent improvement across stages. Attention-only LoRA stalled at 32–39/60; individual attention modules alone did not fix the Vietnamese diacritic bottleneck on this panel. When the LoRA target was expanded to more DiT modules, the highest-scoring single checkpoint climbed to 48/60. Averaging compatible checkpoints then produced `soup567` at 52/60.
 
-Single-word performance did not automatically transfer to multi-word images. The selected single-word checkpoint produced many errors on two-line layouts. After compound bridge training, a follow-up at learning rate `3e-5`, and a 90/10 weighted average with the Gold4 milestone, errors on Eval28 decreased from 56/168 to 4/168. The residual errors were concentrated in a few diacritic pairs rather than indicating broad compound-layout failure.
+Single-word performance did not automatically transfer to multi-word images. The selected single-word checkpoint produced many errors on two-line layouts. After compound bridge training, a follow-up at learning rate `3e-5`, and a 90/10 weighted average with the Gold4 milestone, errors on validation Eval28 decreased from 56/168 to 4/168. On the held-out Test28 panel rendered after checkpoint selection, the same final checkpoint produced 3/168 errors. The residual errors were concentrated in a few diacritic pairs rather than indicating broad compound-layout failure.
 
 ## 4.3. Current Limitations
 
-The primary limitation is manual evaluation: images are scored manually, which is appropriate for this calligraphy panel but time-consuming. Eval28 and seed 7000 support controlled iteration, but stronger statistical conclusions require larger benchmarks and additional seeds.
+The primary limitation is manual evaluation: images are scored manually, which is appropriate for this calligraphy panel but time-consuming. Fragile60 and Eval28 were validation/model-selection panels, while Test28 was introduced only after final checkpoint selection. This improves the train/validation/test framing, but stronger statistical conclusions still require larger held-out benchmarks, additional seeds, and more natural sentence-like content.
 
 Style coverage is narrow. Only Thu Phap Thanh Cong Unicode was tested; generalization to other fonts is untested. Training data comes from digital calligraphy fonts, which gives control over orthography and diacritics but cannot capture the materiality of real hand-written calligraphy: paper texture, ink bleeding, imperfect pressure, the artist's personal layout.
 
@@ -739,7 +765,7 @@ Content scope also remains limited. Compound 4/5/7/8-word images are closer to t
 
 ## 4.4. Future Directions
 
-The pipeline reaches 4 errors out of 168 words on the current compound panel, so further work should not focus only on optimizing for lower error counts on the same benchmark. The higher-priority directions are expanding scope, standardizing evaluation, and evaluating deployment-oriented constraints.
+The pipeline reaches low error counts on both validation Eval28 and held-out Test28, so further work should not focus only on optimizing for lower error counts on the same benchmark. The higher-priority directions are expanding scope, standardizing evaluation, and evaluating deployment-oriented constraints.
 
 A first extension is evaluation on multiple calligraphy fonts. The current study only covers Thu Phap Thanh Cong Unicode, while broader Quốc ngữ use requires more styles. Building data for additional fonts would test whether the same DiT-LoRA pipeline can learn multiple brushwork styles while keeping diacritics accurate.
 
@@ -749,7 +775,7 @@ Longer, sentence-like Vietnamese content is also needed. Compound data moved pas
 
 On evaluation and deployment: larger benchmarks with more seeds and more sentence types are needed. A lightweight evaluator could flag missing marks, swapped marks, extra marks, or character substitutions, cutting manual scoring costs, though human judgment should remain part of evaluating style quality and ambiguous cases. Inference cost should also be reduced before interactive use is feasible. Quantization, optimized attention kernels, model compilation, and smaller adapters are relevant deployment-oriented research directions.
 
-The remaining 4 errors on Eval28 open another direction: anti-hallucination in text rendering. On this panel, the model no longer fails broadly, but it still confuses some difficult diacritic and vowel pairs. Hard-word mining, replay data with correct glyphs, and layout-binding specialist adapters could address this group. If these methods improve, later systems could support user-specified Vietnamese text, calligraphy style, image background, and high-resolution output for design, cultural preservation, or education.
+The remaining Eval28 and Test28 errors open another direction: anti-hallucination in text rendering. On these panels, the model no longer fails broadly, but it still confuses some difficult diacritic and vowel pairs. Hard-word mining, replay data with correct glyphs, and layout-binding specialist adapters could address this group. If these methods improve, later systems could support user-specified Vietnamese text, calligraphy style, image background, and high-resolution output for design, cultural preservation, or education.
 
 The evaluated system is an empirical Ideogram4 fine-tuning pipeline for Vietnamese calligraphy image generation. Within the evaluated setting, improved Vietnamese rendering accuracy was associated with the selected base model, diagnostic information about where the diacritic signal persists, targeted DiT-module adaptation, checkpoint stabilization, and direct training on the multi-word layout distribution.
 
@@ -885,6 +911,8 @@ experiments/results/coverage_v10_eval/compound_eval28_soup_e4r2r3
 experiments/results/coverage_v10_eval/compound_eval28_soup_e4r2r3r4
 experiments/results/coverage_v10_eval/compound_eval28_lr3e5_from_gold4
 experiments/results/coverage_v10_eval/compound_eval28_soup_lr3e5_gold4_9to1
+experiments/results/coverage_v10_eval/compound_test28_heldout_seed20260630_soup_lr3e5_gold4_9to1
+experiments/results/coverage_v10_eval/scene_slant_probe_test28_seed7000
 ```
 
 ## Appendix F: Remaining Errors of Compound Gold
@@ -924,6 +952,8 @@ The following files record the figures used in the thesis from `docs/thesis/figu
 | Figure 3.6 | `fig_3_6_compound_eval28_before_after.png` | Compound Eval28 examples comparing `soup567` with the final checkpoint `soup_lr3e5_gold4_9to1` |
 | Figure 3.7 | `fig_3_7_remaining_error_cases.png` | Remaining errors: `Hấn`, `Chịt`, `Huyên`, `Dôi` |
 | Figure 3.8 | `fig_3_8_calligraphy_with_base_model_capability.png` | Context-rich prompts testing whether the fine-tuned checkpoint preserves Ideogram4's base image generation capability when adding Vietnamese calligraphic text |
+| Figure 3.9 | `fig_3_9_heldout_test28_full_panel.jpg` | Full held-out Test28 compound panel, 28 images arranged as four columns by seven rows |
+| Figure 3.10 | `fig_3_10_scene_slant_material_test28_full_panel.jpg` | Scene, material, and tilted-panel stress probe on the held-out Test28 phrases, 28 images arranged as four columns by seven rows |
 
 ## Appendix I: Prompts Used for Comparison Figures
 
@@ -965,6 +995,20 @@ experiments/results/coverage_v10_eval/thesis_scene_candidates/phuc_duc_seed7002/
 
 These phrases were selected after trying several variants. The phrase `Lộc` was not used in the proposed figure because it tends to lose the `ô` circumflex, while `Vượng` produced more acceptable results in the same context.
 
+Figure 3.9 is a contact sheet built from the full held-out Test28 render directory:
+
+```text
+experiments/results/coverage_v10_eval/compound_test28_heldout_seed20260630_soup_lr3e5_gold4_9to1
+```
+
+Figure 3.10 is a contact sheet built from the scene/material/tilted-panel stress-probe directory:
+
+```text
+experiments/results/coverage_v10_eval/scene_slant_probe_test28_seed7000
+```
+
+The prompt records for Figure 3.10 are stored in the same directory as `*_prompt.json` files. In these prompts, tilted composition is described as the pose of the paper or panel surface in perspective. The calligraphy is not requested to be italic; it is requested to lie flat on the angled surface.
+
 ## Appendix J: Reference and Evidence Traceability
 
 This appendix records which parts of the thesis are supported by external literature and which parts are supported by internal experimental artifacts. It is intended to improve traceability for empirical claims and does not replace the main reference list.
@@ -981,9 +1025,9 @@ This appendix records which parts of the thesis are supported by external litera
 | Sections 1.4.1-1.4.4 and Chapter 2 | GANs, diffusion models, latent diffusion, DiT, visual text rendering, LoRA, model soups, SSIM, and quantized/parameter-efficient fine-tuning | External references [1]-[14], [19]-[28] | These references provide the theoretical and methodological background. |
 | Sections 3.2.2 and 3.2.3 | The compound dataset covers 406/406 Vietnamese diacritical token IDs and contains 2808 compound images plus supplementary single-word samples | `data/coverage_v10/metadata_compound_2808.jsonl`; Appendix B; tokenizer robustness reports | The metadata file and build scripts provide dataset traceability. |
 | Section 3.3 | Qwen3-VL is not globally blind to Vietnamese diacritics; the 990-vs-7165 probe produced 42 very-hard, 225 hard, 567 medium, and 156 easy cases | Internal probe reports in Appendix G and persisted probe results under `experiments/results/v10_phase1_probes/` | Probe reports and result tables provide evidence for this internal empirical claim. |
-| Sections 3.4-3.6 | Attention-only plateau, wide-target improvement, `soup567`, compound bridge, Gold4, and final 4/168 Eval28 result | Appendix C, D, E, F; evaluation directories and checkpoint registry | Checkpoint names, evaluation folders, and manual scoring notes are aligned with the final figures. |
+| Sections 3.4-3.6 | Attention-only plateau, wide-target improvement, `soup567`, compound bridge, Gold4, final 4/168 validation Eval28 result, and 3/168 held-out Test28 result | Appendix C, D, E, F; evaluation directories, held-out Test28 manifest, manual scoring file, Figure 3.9, and checkpoint registry | Checkpoint names, evaluation folders, and manual scoring notes are aligned with the final figures and held-out test artifacts. |
 | Section 3.5 | Manual evaluation is the primary metric because OCR/automatic metrics are unreliable for stylized Vietnamese calligraphy | Visual text rendering references [10], [24–26], SSIM reference [23], and internal manual evaluation protocol | Manual scoring remains the primary metric because the target domain is stylized calligraphy. |
-| Section 3.5.4 and Figure 3.8 | Fine-tuned checkpoints should preserve base image generation capability while improving Vietnamese calligraphy | Figure 3.8 and prompt records in Appendix I | The prompts, seeds, and source images used to build Figure 3.8 are listed in Appendix I. |
+| Section 3.5.5 and Figures 3.8, 3.10 | Fine-tuned checkpoints should preserve base image generation capability while improving Vietnamese calligraphy; scene/material/panel-pose stress can still increase diacritic-binding errors | Figure 3.8, Figure 3.10, prompt records in Appendix I, and `manual_error_summary_20260701.json` | The prompts, seeds, source images, and manual stress-probe notes are listed in Appendix I and the corresponding experiment directories. |
 | Section 4.4 | Proposed extension to real calligraphy photographs and multiple fonts | This is a proposed extension, not a completed result | The text is framed as a proposed extension rather than current achievement. |
 
 ---
